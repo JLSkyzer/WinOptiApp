@@ -130,14 +130,27 @@ Format : `id` — label — mécanisme — risque.
 
 **Affichage / Jeux** (existantes)
 - `fullscreen-optimizations-disable` — Désactiver les optimisations plein écran par jeu
-  (motif liste d'exécutables, comme `gpu-preference-game`) —
+  (même *motif* liste d'exécutables que `gpu-preference-game`, mais **pas la même
+  implémentation** : clé de registre différente (`AppCompatFlags\Layers` avec le flag
+  `DISABLEDXMAXIMIZEDWINDOWEDMODE`, contre `DirectX\UserGpuPreferences` pour la préférence
+  GPU) — les fonctions UI (`renderGpuPrefList`) et moteur (`Invoke-*GpuPrefApp`) existantes
+  sont câblées en dur sur la clé GPU et ne peuvent pas être réutilisées telles quelles ;
+  ce tweak a donc besoin de son propre `type` de liste spéciale
+  (`type: "fullscreen-opt-list"`, sans `kind`) avec ses propres actions moteur dédiées
+  (`Invoke-ListFullscreenOptApps`/`Invoke-AddFullscreenOptApp`/
+  `Invoke-RemoveFullscreenOptApp`) et sa propre fonction de rendu
+  (`renderFullscreenOptList`), construites sur le même modèle que le GPU mais ciblant
+  `AppCompatFlags\Layers`) —
   `HKCU\...\AppCompatFlags\Layers` (`DISABLEDXMAXIMIZEDWINDOWEDMODE`) — intermédiaire (ne
   s'applique qu'aux jeux DX9-11)
 - `tdr-delay-increase` — Augmenter le délai TDR — `HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\TdrDelay`
   — avancé — *description doit mentionner que Microsoft déconseille cette clé aux
   utilisateurs finaux et qu'un vrai problème driver mettra plus longtemps à récupérer*
-- `gpu-preemption-disable` — Désactiver la préemption GPU — clé `GraphicsDrivers`, source
-  RayOptimizer uniquement — avancé — *description porte la mention "effet non garanti"*
+- `gpu-preemption-disable` — Désactiver la préemption GPU —
+  `HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler\EnablePreemption` = 0
+  (mécanisme recoupé sur deux sources communautaires indépendantes en plus de RayOptimizer,
+  mais non documenté officiellement par Microsoft) — avancé — *description porte la
+  mention "effet non garanti"*
 
 **Démarrage** (existante)
 - `fast-startup-disable` — Désactiver le Démarrage rapide —
@@ -173,8 +186,13 @@ Format : `id` — label — mécanisme — risque.
   `HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo\Enabled` = 0 — basique
 - `windows-recall-disable` — Désactiver Windows Recall —
   `HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI\AllowRecallEnablement` = 0 —
-  basique — *handler doit détecter la présence d'un PC Copilot+ (NPU) et masquer/désactiver
-  le tweak si non applicable, plutôt que l'afficher partout*
+  basique — le réglage est sans effet (inerte) sur un PC sans NPU, donc l'écrire n'est
+  jamais risqué ; par clarté d'UX on masque quand même le tweak si aucun NPU n'est détecté.
+  **Nouveau champ de schéma symétrique à `guardNoDeviceClass`** : `guardRequiresDeviceClass`
+  (guard positif — le tweak n'est activable que si la classe de périphérique est *présente*,
+  contrairement à `guardNoDeviceClass` qui bloque quand elle est présente). Détection NPU via
+  `Get-PnpDevice -Class 'ComputeAccelerator'`, classe confirmée fonctionnelle aussi bien sur
+  Intel Core Ultra (Meteor Lake+) que Snapdragon X (Copilot+ PC ARM).
 - `cloud-clipboard-disable` — Désactiver la synchronisation cloud du presse-papiers —
   `HKCU\Software\Microsoft\Clipboard` — basique
 
@@ -188,12 +206,15 @@ Format : `id` — label — mécanisme — risque.
 - `mouse-acceleration-disable` — Désactiver l'accélération de la souris (mouvement 1:1) —
   `HKCU\Control Panel\Mouse` (`MouseSpeed`, `MouseThreshold1`, `MouseThreshold2` = 0) —
   basique
-- `mouse-data-queue-size` — Augmenter le buffer d'entrée souris —
+- `mouse-data-queue-size` — Réduire le buffer d'entrée souris (défaut 100 → 20) —
   `HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters\MouseDataQueueSize` —
-  avancé — *description porte la mention "effet non garanti" (bancs d'essai mitigés)*
-- `keyboard-data-queue-size` — Équivalent clavier —
+  avancé — **correction post-recherche** : la conception initiale disait "augmenter", ce
+  qui est l'inverse du tweak communautaire réel (qui réduit la valeur, plage recommandée
+  20-60, défaut 100) ; effet contesté (placebo selon certains, réel selon d'autres) —
+  *description porte la mention "effet non garanti" (bancs d'essai mitigés)*
+- `keyboard-data-queue-size` — Équivalent clavier (défaut 100 → 20) —
   `HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters\KeyboardDataQueueSize` —
-  avancé — même mention
+  avancé — même correction, même mention
 - `keyboard-repeat-accelerate` — Répétition clavier accélérée —
   `HKCU\Control Panel\Keyboard` (`KeyboardDelay` = 0) — basique
 - `usb-thread-priority` — Priorité des threads USB —
@@ -210,7 +231,11 @@ Format : `id` — label — mécanisme — risque.
   `HKCU\Control Panel\Mouse` (`SmoothMouseXCurve`/`SmoothMouseYCurve`) — intermédiaire —
   *pour un DPI hors des 5 presets standards, le tweak ne s'applique pas ; la description
   renvoie vers le site MarkC (entrée de guide manuel, Chantier 2) pour un calcul sur
-  mesure*
+  mesure*. **Nécessite un choix utilisateur (le preset DPI) avant application** : comme le
+  tweak audio par périphérique, ce n'est pas un simple interrupteur — c'est un widget
+  spécial (`type: "markc-mouse-fix"`, sans `kind`, sur le modèle des entrées de liste
+  spéciales) avec un sélecteur de DPI (5 boutons ou liste déroulante) et un état
+  activé/désactivé propre.
 
 **Latence** (nouvelle catégorie)
 - `global-timer-resolution` — Restaurer la résolution timer fine (1ms) pour les jeux —
