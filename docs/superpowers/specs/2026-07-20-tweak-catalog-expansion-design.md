@@ -226,16 +226,15 @@ Format : `id` — label — mécanisme — risque.
   **le handler doit vérifier que la modification a réellement pris effet après
   application et remonter un état honnête si non**, plutôt que d'afficher un succès
   silencieux
-- `markc-mouse-fix` — Courbes d'accélération corrigées par DPI (constantes MarkC
-  publiées, presets 100/125/150/175/200% embarqués en dur) —
-  `HKCU\Control Panel\Mouse` (`SmoothMouseXCurve`/`SmoothMouseYCurve`) — intermédiaire —
-  *pour un DPI hors des 5 presets standards, le tweak ne s'applique pas ; la description
-  renvoie vers le site MarkC (entrée de guide manuel, Chantier 2) pour un calcul sur
-  mesure*. **Nécessite un choix utilisateur (le preset DPI) avant application** : comme le
-  tweak audio par périphérique, ce n'est pas un simple interrupteur — c'est un widget
-  spécial (`type: "markc-mouse-fix"`, sans `kind`, sur le modèle des entrées de liste
-  spéciales) avec un sélecteur de DPI (5 boutons ou liste déroulante) et un état
-  activé/désactivé propre.
+- ~~`markc-mouse-fix`~~ — **retiré de l'automatisation après vérification technique**
+  (voir "Hors scope" ci-dessous) : les valeurs binaires exactes des courbes
+  `SmoothMouseXCurve`/`SmoothMouseYCurve` par preset d'échelle d'affichage ne sont
+  publiées par MarkC que dans des fichiers `.reg` à l'intérieur d'une archive tierce
+  (OneDrive), non vérifiables de façon fiable sans télécharger et inspecter ce paquet.
+  Plutôt que de figer des octets de courbe potentiellement faux dans le moteur (effet
+  silencieux et cassant en cas d'erreur, sans aucun test automatisé pour le détecter),
+  ce tweak devient une entrée de guide manuel (Chantier 2) avec lien vers le site/builder
+  MarkC — même traitement que les deux mécanismes déjà écartés à la décision 6.
 
 **Latence** (nouvelle catégorie)
 - `global-timer-resolution` — Restaurer la résolution timer fine (1ms) pour les jeux —
@@ -266,8 +265,8 @@ Format : `id` — label — mécanisme — risque.
   `HKCU\...\Explorer\Advanced\MMTaskbarEnabled`/`MMTaskbarMode`/`MMTaskbarGlomLevel` —
   basique
 
-Total : 40 tweaks automatisés (dont 1 en liste dynamique par périphérique audio,
-sans `kind`), répartis sur 11 catégories
+Total : 39 tweaks automatisés (dont 1 en liste dynamique par périphérique audio et 1 en
+liste dynamique par exécutable plein écran, sans `kind`), répartis sur 11 catégories
 (7 existantes étendues + 4 nouvelles).
 
 ## Comportement UI
@@ -286,7 +285,10 @@ nouvel onglet de catégorie, sur le modèle des 7 existants.
   NVIDIA App).
 - 2 entrées de guide manuel pour les mécanismes non confirmés (filtrage barre des tâches
   par bureau virtuel, mémorisation d'emplacement des fenêtres par écran).
-- Entrée de guide manuel pour MarkC Mouse Fix hors presets DPI standards.
+- Entrée de guide manuel pour MarkC Mouse Fix (retiré en totalité de l'automatisation du
+  Chantier 1 après vérification technique : valeurs binaires des courbes non
+  vérifiables de façon fiable sans télécharger une archive tierce, voir section
+  "Périphériques" ci-dessus).
 - Entrée de guide manuel pour le mode exclusif audio (4 clics dans le panneau Son de
   Windows, voir section "Tweak par périphérique audio" ci-dessus pour le détail du
   chemin) — retiré de l'automatisation du Chantier 1 après vérification technique
