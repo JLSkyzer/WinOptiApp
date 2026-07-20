@@ -81,20 +81,27 @@ Fonctionnement moteur :
   liste `{id: <GUID>, name: <nom lisible>}`.
 - `Get-DeviceListToggleState` / `Set-DeviceListToggleValue` (génériques, sur le modèle de
   `Get-ToggleState`/`Set-ToggleValue` existants) prennent en plus un `deviceId` et lisent/
-  écrivent la propriété `propertyKey` sous
-  `...\Render\<deviceId>\FxProperties` (ou `\Properties` selon la propriété visée).
-- Le mécanisme exact de la propriété "mode exclusif" (deuxième tweak `device-list`,
-  `audio-exclusive-mode`) n'a pas été confirmé avec un niveau de confiance suffisant
-  pendant la recherche — **à valider techniquement lors de l'écriture du plan**
-  (test sur une machine réelle avant de figer la clé), plutôt que d'inventer une valeur.
-  La propriété `PKEY_AudioEndpoint_Disable_SysFx` ci-dessus (améliorations audio) est en
-  revanche un mécanisme bien documenté et peut être figée telle quelle.
+  écrivent la propriété `propertyKey` sous `...\Render\<deviceId>\FxProperties`.
+  La propriété `PKEY_AudioEndpoint_Disable_SysFx` (`{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5`)
+  est un mécanisme bien documenté par Microsoft (Win32 Core Audio API) et peut être figée
+  telle quelle.
+- **Correction post-vérification technique** : le tweak "mode exclusif audio" envisagé au
+  départ comme second `device-list` a été retiré de ce chantier. Son mécanisme registre
+  existe (`{b3f8fa53-0004-438e-9003-51a46e139bfc},3`/`,4`) mais nécessite de prendre
+  possession de la clé et d'en modifier les ACL (compte SYSTEM) avant de pouvoir l'écrire
+  — une opération de nature différente des toggles registre simples de ce catalogue, avec
+  un vrai risque si mal exécutée. Le même réglage est accessible en 4 clics via le panneau
+  Son de Windows (icône haut-parleur > Sons > onglet Lecture > Propriétés du périphérique >
+  onglet Avancé > décocher "Autoriser les applications à utiliser ce périphérique en mode
+  exclusif") : il devient une entrée de guide manuel (Chantier 2) plutôt qu'un tweak
+  automatisé. Il n'y a donc qu'un seul tweak `device-list` dans ce chantier
+  (`audio-enhancements-disable`).
 
 Impact UI (`renderer/`) : la page catégorie "Audio" doit proposer un sélecteur de
-périphérique (liste déroulante alimentée par `Invoke-GetAudioDevices`) au-dessus des deux
-tweaks `device-list`, qui n'affichent leur état/toggle qu'une fois un périphérique
-sélectionné. C'est le seul ajout d'UI non trivial de ce chantier (le reste ce sont des
-toggles simples s'intégrant dans les pages de catégorie existantes).
+périphérique (liste déroulante alimentée par `Invoke-GetAudioDevices`) au-dessus du tweak
+`device-list`, qui n'affiche son état/toggle qu'une fois un périphérique sélectionné.
+C'est le seul ajout d'UI non trivial de ce chantier (le reste ce sont des toggles simples
+s'intégrant dans les pages de catégorie existantes).
 
 ## Tweaks à automatiser, par catégorie
 
@@ -176,9 +183,6 @@ Format : `id` — label — mécanisme — risque.
   `HKLM\...\Multimedia\SystemProfile\Tasks\Audio` et `\Pro Audio` — intermédiaire
 - `audio-enhancements-disable` — voir section schéma `device-list` ci-dessus —
   intermédiaire
-- `audio-exclusive-mode` — voir section schéma `device-list` ci-dessus (mécanisme à
-  confirmer techniquement) — intermédiaire — *description mentionne que les
-  notifications/sons Discord peuvent être coupés pendant le jeu*
 
 **Périphériques** (nouvelle catégorie)
 - `mouse-acceleration-disable` — Désactiver l'accélération de la souris (mouvement 1:1) —
@@ -225,17 +229,19 @@ Format : `id` — label — mécanisme — risque.
   garanti, mécanisme hérité"
 
 **Productivité** (nouvelle catégorie, volet bureautique)
-- `alttab-filter-apps-only` — Filtre Alt+Tab sur les applications seules (pas les onglets
-  navigateur) — `HKCU\...\Explorer\Advanced\MultiTaskingAltTabFilter` — basique — *valeur
-  exacte à confirmer empiriquement pendant l'implémentation (communauté documente
-  1/3/4/5 sans confirmation officielle unique)*
+- `alttab-filter-apps-only` — Filtre Alt+Tab sur les applications seules (sans les onglets
+  Edge) — `HKCU\...\Explorer\Advanced\MultiTaskingAltTabFilter` = 3 (0 = fenêtres + tous
+  les onglets Edge, 1 = + 5 onglets récents, 2 = + 3 onglets récents, 3 = fenêtres
+  d'application seules ; valeur confirmée par recherche, nécessite déconnexion/reconnexion
+  ou redémarrage pour prendre effet) — basique — *le nom du réglage est trompeur : il ne
+  filtre que les onglets Microsoft Edge, pas les onglets d'autres navigateurs*
 - `snap-assist-flyout-enable` — Activer le flyout Snap Assist —
   `HKCU\...\Explorer\Advanced\EnableSnapAssistFlyout` — basique
 - `taskbar-multi-monitor-show-all` — Barre des tâches sur tous les écrans —
   `HKCU\...\Explorer\Advanced\MMTaskbarEnabled`/`MMTaskbarMode`/`MMTaskbarGlomLevel` —
   basique
 
-Total : 41 tweaks automatisés (dont 2 en `device-list`), répartis sur 11 catégories
+Total : 40 tweaks automatisés (dont 1 en `device-list`), répartis sur 11 catégories
 (7 existantes étendues + 4 nouvelles).
 
 ## Comportement UI
@@ -254,3 +260,7 @@ chacune un nouvel onglet de catégorie, sur le modèle des 7 existants.
 - 2 entrées de guide manuel pour les mécanismes non confirmés (filtrage barre des tâches
   par bureau virtuel, mémorisation d'emplacement des fenêtres par écran).
 - Entrée de guide manuel pour MarkC Mouse Fix hors presets DPI standards.
+- Entrée de guide manuel pour le mode exclusif audio (4 clics dans le panneau Son de
+  Windows, voir section schéma `device-list` ci-dessus pour le détail du chemin) — retiré
+  de l'automatisation du Chantier 1 après vérification technique (nécessiterait une
+  manipulation d'ACL registre à risque).
