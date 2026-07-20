@@ -535,7 +535,7 @@
 
       const section = document.createElement('div');
       section.className = 'guide-category-section';
-      const collapsed = state.guideCollapsedCategories.has(cat);
+      const collapsed = !q && state.guideCollapsedCategories.has(cat);
       section.classList.toggle('collapsed', collapsed);
 
       const catHeader = document.createElement('div');
@@ -559,7 +559,7 @@
         item.appendChild(title);
         const summary = document.createElement('div');
         summary.className = 'guide-list-item-summary';
-        summary.textContent = entry.summary;
+        summary.textContent = entry.summary || '';
         item.appendChild(summary);
         item.addEventListener('click', () => {
           state.currentGuideEntryId = entry.id;
