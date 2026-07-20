@@ -328,7 +328,7 @@ html, body {
 
 .guide-list-pane {
   flex: 0 0 340px;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 150px);
   overflow-y: auto;
 }
 
@@ -363,13 +363,14 @@ html, body {
   border-radius: var(--radius);
   cursor: pointer;
   margin-bottom: 3px;
+  border-left: 3px solid transparent;
 }
 
 .guide-list-item:hover { background: rgba(255,255,255,0.04); }
 
 .guide-list-item.active {
   background: rgba(79,140,255,0.12);
-  border-left: 3px solid var(--accent);
+  border-left-color: var(--accent);
 }
 
 .guide-list-item-title { font-size: 13px; font-weight: 600; }
