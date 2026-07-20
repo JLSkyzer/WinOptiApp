@@ -25,7 +25,7 @@ perdre cette fonctionnalite ; les deux champs sont optionnels et independants.
 **Files:**
 - Modify: `data/guide-steps.json` (reecriture complete)
 
-- [ ] **Step 1: Remplacer le contenu du fichier**
+- [x] **Step 1: Remplacer le contenu du fichier**
 
 ```json
 [
@@ -300,7 +300,7 @@ perdre cette fonctionnalite ; les deux champs sont optionnels et independants.
 ]
 ```
 
-- [ ] **Step 2: Verifier que le JSON est valide**
+- [x] **Step 2: Verifier que le JSON est valide**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/guide-steps.json','utf8')); console.log('OK', JSON.parse(require('fs').readFileSync('data/guide-steps.json','utf8')).length)"`
 Expected: `OK 28`
@@ -316,7 +316,7 @@ stocker un etat "coche/pas coche" par entree cote main process.
 - Modify: `main.js:10-26` et `main.js:99-109`
 - Modify: `preload.js:7-8`
 
-- [ ] **Step 1: Retirer le chemin et les fonctions d'etat du guide dans `main.js`**
+- [x] **Step 1: Retirer le chemin et les fonctions d'etat du guide dans `main.js`**
 
 Remplacer :
 
@@ -350,7 +350,7 @@ const CATALOG_PATH = path.join(__dirname, 'data', 'tweaks-catalog.json');
 const GUIDE_STEPS_PATH = path.join(__dirname, 'data', 'guide-steps.json');
 ```
 
-- [ ] **Step 2: Retirer les handlers IPC `guide:getState` / `guide:setStepChecked`**
+- [x] **Step 2: Retirer les handlers IPC `guide:getState` / `guide:setStepChecked`**
 
 Remplacer :
 
@@ -384,7 +384,7 @@ ipcMain.handle('data:getGuideSteps', async () => {
 // --- IPC : moteur PowerShell (tout ce qui touche reellement au systeme) ---
 ```
 
-- [ ] **Step 3: Retirer les methodes correspondantes de `preload.js`**
+- [x] **Step 3: Retirer les methodes correspondantes de `preload.js`**
 
 Remplacer :
 
@@ -412,7 +412,7 @@ contextBridge.exposeInMainWorld('api', {
 });
 ```
 
-- [ ] **Step 4: Verifier la syntaxe des deux fichiers**
+- [x] **Step 4: Verifier la syntaxe des deux fichiers**
 
 Run: `node --check main.js && node --check preload.js`
 Expected: aucune sortie (exit code 0)
@@ -426,7 +426,7 @@ Expected: aucune sortie (exit code 0)
 - Modify: `renderer/app.js:80-95` (`init()`)
 - Modify: `renderer/app.js:485-535` (`renderGuide()`)
 
-- [ ] **Step 1: Adapter l'objet `state`**
+- [x] **Step 1: Adapter l'objet `state`**
 
 Remplacer :
 
@@ -459,7 +459,7 @@ par :
   };
 ```
 
-- [ ] **Step 2: Adapter `init()` (retirer le chargement de `guideState`)**
+- [x] **Step 2: Adapter `init()` (retirer le chargement de `guideState`)**
 
 Remplacer :
 
@@ -501,7 +501,7 @@ par :
   }
 ```
 
-- [ ] **Step 3: Remplacer entierement `renderGuide()` par la vue divisee**
+- [x] **Step 3: Remplacer entierement `renderGuide()` par la vue divisee**
 
 Remplacer la fonction actuelle (de `function renderGuide() {` a son accolade fermante,
 juste avant `async function renderRestorePage()`) :
@@ -734,7 +734,7 @@ par :
   }
 ```
 
-- [ ] **Step 4: Verifier la syntaxe**
+- [x] **Step 4: Verifier la syntaxe**
 
 Run: `node --check renderer/app.js`
 Expected: aucune sortie (exit code 0)
@@ -747,7 +747,7 @@ Expected: aucune sortie (exit code 0)
 - Modify: `renderer/styles.css:323-363` (retirer les regles obsoletes du guide en onglets)
 - Modify: `renderer/styles.css` (ajouter les regles de la vue divisee, en fin de fichier)
 
-- [ ] **Step 1: Retirer les regles CSS devenues obsoletes**
+- [x] **Step 1: Retirer les regles CSS devenues obsoletes**
 
 Remplacer (les classes `.guide-nav`/`.guide-tab`/`.guide-step*` ne sont plus emises par
 `renderGuide()` apres la Task 3) :
@@ -899,7 +899,7 @@ par les nouvelles regles de la vue divisee :
 .guide-related-link:hover { text-decoration: underline; }
 ```
 
-- [ ] **Step 2: Verifier qu'aucune autre regle du fichier ne reference les classes retirees**
+- [x] **Step 2: Verifier qu'aucune autre regle du fichier ne reference les classes retirees**
 
 Run: `grep -n "guide-nav\|guide-tab\|guide-step" renderer/styles.css renderer/app.js`
 Expected: aucune correspondance (les deux fichiers ne doivent plus contenir ces classes)
@@ -910,12 +910,12 @@ Expected: aucune correspondance (les deux fichiers ne doivent plus contenir ces 
 
 **Files:** aucun (verification uniquement)
 
-- [ ] **Step 1: Lancer l'application**
+- [x] **Step 1: Lancer l'application**
 
 Run: `npm start`
 Expected: la fenetre WinOptiApp s'ouvre sans erreur dans la console (DevTools si besoin).
 
-- [ ] **Step 2: Verifier la liste du guide**
+- [x] **Step 2: Verifier la liste du guide**
 
 Cliquer sur "Guide manuel" dans la sidebar. Verifier :
 - Les entrees sont groupees par categorie (NVIDIA Panneau de configuration, BIOS / UEFI,
@@ -924,13 +924,13 @@ Cliquer sur "Guide manuel" dans la sidebar. Verifier :
 - Cliquer sur un titre de categorie la replie/deplie (les entrees disparaissent/reapparaissent).
 - Le panneau de droite affiche "Selectionne une entree a gauche" par defaut.
 
-- [ ] **Step 3: Verifier la recherche**
+- [x] **Step 3: Verifier la recherche**
 
 Taper "widgets" dans la barre de recherche. Verifier que seule la categorie
 "Confidentialite" avec l'entree "Reactiver Widgets / Copilot..." reste visible, et que
 les autres categories disparaissent. Vider le champ : tout reapparait.
 
-- [ ] **Step 4: Verifier la page de detail**
+- [x] **Step 4: Verifier la page de detail**
 
 Cliquer sur l'entree "Reactiver Widgets / Copilot dans la barre des taches". Verifier
 dans le panneau de droite :
@@ -941,7 +941,7 @@ dans le panneau de droite :
 - Un lien "Voir le tweak automatise associe -> Widgets / Copilot / suggestions Bing"
   est present en bas.
 
-- [ ] **Step 5: Verifier les liens sortants**
+- [x] **Step 5: Verifier les liens sortants**
 
 Cliquer sur "Voir l'article officiel Microsoft" : verifier que le navigateur par defaut
 s'ouvre sur la page support.microsoft.com correspondante (et pas dans l'app elle-meme).
@@ -950,8 +950,34 @@ Cliquer sur "Voir le tweak automatise associe -> ..." : verifier que l'app navig
 la page de categorie "Confidentialite" (tweaks automatises), avec la sidebar mise a jour
 sur l'entree correspondante.
 
-- [ ] **Step 6: Verifier une entree sans lien source ni tweak associe**
+- [x] **Step 6: Verifier une entree sans lien source ni tweak associe**
 
 Cliquer sur une entree quelconque de "CS2" ou "Battlefield". Verifier que le detail
 affiche uniquement le titre + la section "Details", sans bouton "Voir la source" ni
 lien "tweak associe" (champs absents pour ces entrees).
+
+---
+
+## Statut d'execution
+
+Plan execute en integralite via `superpowers:subagent-driven-development` (implementeur +
+revue conformite spec + revue qualite code, par tache), directement sur `master` (pas de
+worktree, choix utilisateur). Depot git initialise pour l'occasion (`git init`).
+
+- **Task 1** (migration `guide-steps.json`) : commit `a596e64`. Reviews spec + qualite : OK.
+- **Task 2** (retrait persistance etat guide) : commit `d3e137b`. Reviews spec + qualite : OK.
+- **Task 3** (vue divisee liste/detail `app.js`) : commit `3e373c6`, corrections suite a
+  revue qualite (auto-expansion categorie + garde `summary`) : commit `e65a2de`. Reviews
+  spec + qualite : OK.
+- **Task 4** (CSS vue divisee) : commit `c69cea7`, corrections suite a revue qualite
+  (decalage visuel `.guide-list-item.active` + hauteur max approximative) : commit
+  `0f6239b`. Reviews spec + qualite : OK.
+- **Task 5** (verification manuelle bout-en-bout) : verifications automatiques passees
+  (demarrage sans erreur, JSON valide 28 entrees/8 categories, coherence classes CSS/JS,
+  `node --check` sur les 3 fichiers JS) + clic-through manuel effectue par l'utilisateur
+  dans l'app lancee via `npm start`, tous les points de la checklist (Steps 1-6 ci-dessus)
+  valides.
+
+Reste a faire : revue de code finale sur l'ensemble de l'implementation (commit initial
+`f753968` -> dernier commit ci-dessus), puis cloture (pas de worktree/branche a merger ici,
+travail direct sur `master`).
