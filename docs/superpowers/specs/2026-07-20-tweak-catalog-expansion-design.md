@@ -48,60 +48,60 @@ couvre la sélection retenue et la façon de l'intégrer au catalogue.
    renvoyés en candidats de guide manuel (Chantier 2, avec lien vers les paramètres
    Windows natifs `ms-settings:`).
 
-## Modification de schéma : nouveau `kind: "device-list"`
+## Tweak par périphérique audio : liste dynamique dédiée (pas de nouveau `kind`)
 
-Deux tweaks audio (désactivation des améliorations audio, mode exclusif) s'appliquent à
-un périphérique de sortie audio choisi par l'utilisateur, pas à une clé de registre
-globale unique. Le moteur actuel connaît déjà les motifs `registry` (générique) et
-`handler` (fonctions dédiées) ; on ajoute un troisième motif :
+**Correction d'architecture (post-lecture du moteur existant)** : la conception initiale
+prévoyait un nouveau motif générique `kind: "device-list"`, intégré au dispatcher uniforme
+`Get-ToggleState`/`Set-ToggleValue` (qui ne connaît aujourd'hui que `registry`, `service`,
+`handler`). En étudiant `engine/Engine.ps1` et `renderer/app.js` en détail pendant
+l'écriture du plan, il s'avère que ce dispatcher suppose un état *unique par id de
+catalogue* — incompatible avec un tweak dont l'état dépend d'un périphérique choisi au
+moment de l'usage (`Invoke-GetAllStates`/`Invoke-ResetCategory` itèrent sur le catalogue
+sans contexte de périphérique). Le moteur a déjà un motif pour exactement ce cas : les
+entrées **sans `kind`** (`type: "startup-list"`, `"bloat-list"`, `"exe-list"` — ex.
+`gpu-preference-game`) sont rendues par `renderSpecialWidget()` côté UI et pilotées par
+des actions `Invoke-List*`/`Invoke-Add*`/`Invoke-Remove*` dédiées, en dehors du dispatcher
+uniforme. Le tweak audio suit ce même motif, avec un nouveau `type: "audio-device-list"` :
 
 ```json
 {
   "id": "audio-enhancements-disable",
   "category": "audio",
   "risk": "intermediaire",
-  "type": "toggle",
-  "kind": "device-list",
-  "deviceClass": "audio-render",
-  "propertyKey": "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},0",
-  "regType": "DWord",
-  "onValue": 1,
-  "offValue": 0,
-  "defaultValue": 0,
+  "type": "audio-device-list",
   "requiresRestart": false,
-  "label": "Désactiver les améliorations audio",
-  "description": "Coupe la virtualisation/égalisation logicielle de Windows (par périphérique), qui ajoute de la latence. Laisse le logiciel du périphérique (casque, DAC) gérer les effets si besoin."
+  "label": "Désactiver les améliorations audio par périphérique",
+  "description": "Coupe la virtualisation/égalisation logicielle de Windows (par périphérique de sortie), qui ajoute de la latence. Laisse le logiciel du périphérique (casque, DAC) gérer les effets si besoin."
 }
 ```
 
-Fonctionnement moteur :
-- `Invoke-GetAudioDevices` (nouvelle fonction) énumère les sous-clés de
-  `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\*`, lit le nom
-  convivial de chaque périphérique (via son magasin de propriétés), et retourne une
-  liste `{id: <GUID>, name: <nom lisible>}`.
-- `Get-DeviceListToggleState` / `Set-DeviceListToggleValue` (génériques, sur le modèle de
-  `Get-ToggleState`/`Set-ToggleValue` existants) prennent en plus un `deviceId` et lisent/
-  écrivent la propriété `propertyKey` sous `...\Render\<deviceId>\FxProperties`.
-  La propriété `PKEY_AudioEndpoint_Disable_SysFx` (`{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5`)
-  est un mécanisme bien documenté par Microsoft (Win32 Core Audio API) et peut être figée
-  telle quelle.
-- **Correction post-vérification technique** : le tweak "mode exclusif audio" envisagé au
-  départ comme second `device-list` a été retiré de ce chantier. Son mécanisme registre
-  existe (`{b3f8fa53-0004-438e-9003-51a46e139bfc},3`/`,4`) mais nécessite de prendre
-  possession de la clé et d'en modifier les ACL (compte SYSTEM) avant de pouvoir l'écrire
-  — une opération de nature différente des toggles registre simples de ce catalogue, avec
-  un vrai risque si mal exécutée. Le même réglage est accessible en 4 clics via le panneau
-  Son de Windows (icône haut-parleur > Sons > onglet Lecture > Propriétés du périphérique >
-  onglet Avancé > décocher "Autoriser les applications à utiliser ce périphérique en mode
-  exclusif") : il devient une entrée de guide manuel (Chantier 2) plutôt qu'un tweak
-  automatisé. Il n'y a donc qu'un seul tweak `device-list` dans ce chantier
-  (`audio-enhancements-disable`).
+Fonctionnement moteur (deux nouvelles actions top-niveau, sur le modèle exact de
+`ListGpuPrefApps`/`AddGpuPrefApp`) :
+- `Invoke-ListAudioDevices` énumère les sous-clés de
+  `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\*`, lit le nom
+  convivial de chaque périphérique dans sa sous-clé `Properties`
+  (valeur `{a45c254e-df1c-4efd-8020-67d146a850e0},14` = `PKEY_Device_FriendlyName`,
+  documentée par Microsoft), lit l'état actuel dans sa sous-clé `FxProperties`
+  (valeur `{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5` = `PKEY_AudioEndpoint_Disable_SysFx`,
+  DWORD, 1 = effets désactivés), et retourne une liste
+  `{id: <GUID>, name: <nom lisible>, enhancementsDisabled: <bool>}`.
+- `Invoke-SetAudioDeviceEffects` (payload `{deviceId, disabled}`) sauvegarde la clé
+  `FxProperties` du périphérique visé puis écrit `{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5`
+  à `1` (désactivé) ou `0` (réactivé).
+- Les deux mécanismes registre ci-dessus sont documentés par Microsoft (Win32 Core Audio
+  API) et confirmés par recoupement indépendant ; ils peuvent être figés tels quels.
+- **Rappel de la correction technique déjà actée** : le tweak "mode exclusif audio"
+  envisagé au départ a été retiré de ce chantier — son mécanisme registre existe
+  (`{b3f8fa53-0004-438e-9003-51a46e139bfc},3`/`,4`) mais nécessite de prendre possession de
+  la clé et d'en modifier les ACL (compte SYSTEM), une opération à risque hors du modèle
+  "toggle simple" de ce catalogue. Il devient une entrée de guide manuel (Chantier 2) via
+  le panneau Son de Windows. Il n'y a donc qu'un seul tweak audio par périphérique dans ce
+  chantier (`audio-enhancements-disable`).
 
-Impact UI (`renderer/`) : la page catégorie "Audio" doit proposer un sélecteur de
-périphérique (liste déroulante alimentée par `Invoke-GetAudioDevices`) au-dessus du tweak
-`device-list`, qui n'affiche son état/toggle qu'une fois un périphérique sélectionné.
-C'est le seul ajout d'UI non trivial de ce chantier (le reste ce sont des toggles simples
-s'intégrant dans les pages de catégorie existantes).
+Impact UI (`renderer/`) : la page catégorie "Audio" affiche une liste de périphériques
+(une ligne par périphérique de sortie, avec son nom et un interrupteur "Effets désactivés"),
+exactement comme la liste d'exécutables GPU existante mais avec un interrupteur au lieu
+d'un bouton "Retirer" — pas de sélecteur déroulant, pas de nouveau paradigme d'UI.
 
 ## Tweaks à automatiser, par catégorie
 
@@ -181,7 +181,7 @@ Format : `id` — label — mécanisme — risque.
 **Audio** (nouvelle catégorie)
 - `mmcss-audio-priority` — Priorité MMCSS renforcée pour les tâches "Audio"/"Pro Audio" —
   `HKLM\...\Multimedia\SystemProfile\Tasks\Audio` et `\Pro Audio` — intermédiaire
-- `audio-enhancements-disable` — voir section schéma `device-list` ci-dessus —
+- `audio-enhancements-disable` — voir section "Tweak par périphérique audio" ci-dessus —
   intermédiaire
 
 **Périphériques** (nouvelle catégorie)
@@ -241,15 +241,17 @@ Format : `id` — label — mécanisme — risque.
   `HKCU\...\Explorer\Advanced\MMTaskbarEnabled`/`MMTaskbarMode`/`MMTaskbarGlomLevel` —
   basique
 
-Total : 40 tweaks automatisés (dont 1 en `device-list`), répartis sur 11 catégories
+Total : 40 tweaks automatisés (dont 1 en liste dynamique par périphérique audio,
+sans `kind`), répartis sur 11 catégories
 (7 existantes étendues + 4 nouvelles).
 
 ## Comportement UI
 
 Aucun changement de navigation : chaque nouveau tweak s'intègre dans la page de
-catégorie existante (grille de toggles), à l'exception du sélecteur de périphérique
-requis pour la catégorie Audio (voir section schéma). Les 4 nouvelles catégories créent
-chacune un nouvel onglet de catégorie, sur le modèle des 7 existants.
+catégorie existante (grille de toggles), à l'exception de la liste de périphériques audio
+(voir section "Tweak par périphérique audio" ci-dessus), rendue comme un widget spécial
+au même titre que la liste GPU existante. Les 4 nouvelles catégories créent chacune un
+nouvel onglet de catégorie, sur le modèle des 7 existants.
 
 ## Hors scope (Chantier 2, spec séparé à venir)
 
@@ -261,6 +263,6 @@ chacune un nouvel onglet de catégorie, sur le modèle des 7 existants.
   par bureau virtuel, mémorisation d'emplacement des fenêtres par écran).
 - Entrée de guide manuel pour MarkC Mouse Fix hors presets DPI standards.
 - Entrée de guide manuel pour le mode exclusif audio (4 clics dans le panneau Son de
-  Windows, voir section schéma `device-list` ci-dessus pour le détail du chemin) — retiré
-  de l'automatisation du Chantier 1 après vérification technique (nécessiterait une
-  manipulation d'ACL registre à risque).
+  Windows, voir section "Tweak par périphérique audio" ci-dessus pour le détail du
+  chemin) — retiré de l'automatisation du Chantier 1 après vérification technique
+  (nécessiterait une manipulation d'ACL registre à risque).
