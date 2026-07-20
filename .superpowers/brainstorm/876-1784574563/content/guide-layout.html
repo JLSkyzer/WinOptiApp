@@ -1,0 +1,54 @@
+<h2>Quelle navigation pour la page Guide manuel ?</h2>
+<p class="subtitle">Clique sur l'option qui te parle le plus, ou décris ce que tu préfères en terminal</p>
+
+<div class="options" data-multiselect="false">
+  <div class="option" data-choice="full-page" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Page complète dédiée (correspond à ta demande initiale)</h3>
+      <p>Cliquer sur une entrée de la liste remplace tout l'écran par la page détail (titre, explication, étapes, bouton "Voir la source"), avec un bouton "&larr; Retour au guide" en haut.</p>
+      <div class="mockup">
+        <div class="mockup-header">1. Liste</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Guide manuel</div>
+          <div class="placeholder" style="height:28px;margin-bottom:6px">Activer Widgets / Copilot &nbsp;&nbsp;&nbsp; <span style="float:right">&rarr;</span></div>
+          <div class="placeholder" style="height:28px;margin-bottom:6px">Configurer le panneau NVIDIA &nbsp;&nbsp;&nbsp; <span style="float:right">&rarr;</span></div>
+          <div class="placeholder" style="height:28px">Régler le BIOS pour le XMP &nbsp;&nbsp;&nbsp; <span style="float:right">&rarr;</span></div>
+        </div>
+      </div>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">2. Détail (page pleine, après clic)</div>
+        <div class="mockup-body">
+          <div class="mock-nav">&larr; Retour &nbsp;|&nbsp; Activer Widgets / Copilot</div>
+          <div class="placeholder" style="height:14px;width:60%;margin-bottom:8px"></div>
+          <div class="placeholder" style="height:60px;margin-bottom:8px"></div>
+          <div class="mock-button">Ouvrir Paramètres Windows</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="split-view" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Vue divisée (liste + détail toujours visibles)</h3>
+      <p>La liste reste affichée à gauche en permanence, le détail s'affiche à droite dès qu'on clique — pas de navigation "page suivante", tout reste sur un seul écran.</p>
+      <div class="mockup">
+        <div class="mockup-header">Aperçu</div>
+        <div class="mockup-body" style="display:flex;gap:10px">
+          <div class="mock-sidebar" style="flex:0 0 40%">
+            <div class="placeholder" style="height:22px;margin-bottom:6px;background:rgba(255,255,255,0.15)">Widgets / Copilot</div>
+            <div class="placeholder" style="height:22px;margin-bottom:6px">Panneau NVIDIA</div>
+            <div class="placeholder" style="height:22px">BIOS XMP</div>
+          </div>
+          <div class="mock-content" style="flex:1">
+            <div class="placeholder" style="height:14px;width:70%;margin-bottom:8px"></div>
+            <div class="placeholder" style="height:60px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="label">Option A recommandée — colle le mieux à "une page complète qui s'ouvre", et reste lisible sur mobile/petite fenêtre si jamais l'app évolue.</p>

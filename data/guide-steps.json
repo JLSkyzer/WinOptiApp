@@ -1,0 +1,191 @@
+[
+  {
+    "id": "nvidia-driver-mode",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "Mode de gestion d'alimentation -> Performances maximales privilegiees",
+    "description": "Panneau NVIDIA > Gerer les parametres 3D > Parametres globaux > \"Mode de gestion d'alimentation\". Empeche le GPU de descendre en frequence entre deux frames, essentiel pour la stabilite des FPS.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "nvidia-low-latency",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "Mode a faible latence -> Ultra",
+    "description": "Meme onglet, parametre \"Mode a faible latence\". Reduit la latence input en limitant la file d'attente de frames pre-rendues (equivalent NVIDIA Reflex quand le jeu ne l'implemente pas nativement).",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "nvidia-vsync-off",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "V-Sync -> Desactive (sauf ecran non G-Sync avec tearing genant)",
+    "description": "Le V-Sync ajoute de la latence input. Sur ecran G-Sync/Free-Sync compatible, laisse le G-Sync gerer la synchronisation et desactive le V-Sync classique.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "nvidia-texture-quality",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "Filtrage des textures -> Qualite performances / Optimisation prioritaire",
+    "description": "Ameliore legerement les FPS avec un impact visuel minime. A ajuster selon le jeu si la nettete des textures lointaines (visibilite cibles) est prioritaire.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "nvidia-sharpening",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "NVIDIA Image Sharpening (filtre NVIDIA) sur les jeux competitifs",
+    "description": "Active via Alt+F3 (overlay GeForce Experience) ou le panneau NVIDIA par jeu. Ameliore la nettete percue des contours de personnages a distance, directement utile pour la visibilite en FPS.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "nvidia-driver-clean",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "Installation propre du driver (DDU + dernier Game Ready)",
+    "description": "En cas de micro-stutters persistants : desinstalle le driver actuel avec Display Driver Uninstaller (DDU) en mode sans echec, puis reinstalle le dernier pilote Game Ready (pas Studio) en mode personnalise sans GeForce Experience si non desire.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bios-xmp",
+    "category": "BIOS / UEFI",
+    "title": "Activer le profil XMP / EXPO de la RAM",
+    "description": "Sans XMP, la RAM tourne souvent a 2133-2666 MHz au lieu de sa vitesse annoncee. Impact direct sur les 1% low FPS en CPU-bound. Menu Overclocking / AI Tweaker selon la carte mere.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bios-resizable-bar",
+    "category": "BIOS / UEFI",
+    "title": "Activer Resizable BAR / Above 4G Decoding",
+    "description": "Permet au CPU d'acceder a la totalite de la VRAM en une fois au lieu de blocs de 256 Mo. Gain FPS variable selon jeu/GPU, sans inconvenient connu sur config recente.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bios-cstates",
+    "category": "BIOS / UEFI",
+    "title": "C-States et Power Limits en mode performance (PC fixe branche)",
+    "description": "Desactiver les etats d'economie d'energie profonds du CPU (C6/C7) ou les regler en mode \"Performance\"/\"Enabled Auto\" selon le fabricant reduit les micro-latences de reveil du CPU. A eviter uniquement si la config chauffe/consomme deja beaucoup au repos.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bios-fastboot-usb",
+    "category": "BIOS / UEFI",
+    "title": "Verifier que le mode USB reste en \"Full Initialization\" si peripheriques au demarrage",
+    "description": "Le Fast Boot BIOS peut couper l'init USB avant l'OS ce qui retarde la detection clavier/souris au demarrage. Sans impact en jeu, mais evite les faux \"peripherique non detecte\" au boot.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "moniteur-refresh-rate",
+    "category": "Moniteur / Affichage",
+    "title": "Regler le taux de rafraichissement au maximum de l'ecran",
+    "description": "Windows retombe parfois a 60 Hz apres un changement de cable/pilote. Verifier dans Parametres d'affichage avance que le Hz max de l'ecran (144/165/240...) est bien selectionne.",
+    "action": { "type": "ms-settings", "target": "ms-settings:display-advanced", "label": "Ouvrir Parametres d'affichage" }
+  },
+  {
+    "id": "moniteur-hdr",
+    "category": "Moniteur / Affichage",
+    "title": "HDR : desactive en competitif, sauf ecran calibre",
+    "description": "Le HDR mal calibre delave les couleurs et peut degrader la visibilite des cibles sombres. A garder desactive pour CS2/COD/Battlefield sauf ecran HDR certifie avec calibration verifiee.",
+    "action": { "type": "ms-settings", "target": "ms-settings:display-hdr", "label": "Ouvrir parametres HDR" }
+  },
+  {
+    "id": "moniteur-scaling",
+    "category": "Moniteur / Affichage",
+    "title": "Mise a l'echelle geree par l'affichage (GPU) plutot que par Windows",
+    "description": "Dans le panneau NVIDIA > Redimensionnement, choisir \"GPU\" avec mise a l'echelle en conservant le ratio d'aspect si tu joues en resolution inferieure a l'ecran natif (meilleure nettete / moins de latence que le scaling Windows).",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "moniteur-cable",
+    "category": "Moniteur / Affichage",
+    "title": "Verifier le cable utilise (DisplayPort recommande pour Hz eleves)",
+    "description": "Un cable HDMI limite peut empecher d'atteindre 144/240 Hz en pleine resolution. DisplayPort 1.4 est recommande pour la plupart des ecrans gaming modernes.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cs2-video-settings",
+    "category": "CS2",
+    "title": "Options video : Basse qualite modeles/textures, ombres minimales",
+    "description": "Options > Video/Video avancee : Qualite des modeles/textures sur Basse, Qualite des ombres sur Basse. Silhouettes ennemies plus nettes contre des decors moins charges, gain de visibilite classique en CS2.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cs2-multicore",
+    "category": "CS2",
+    "title": "Rendu multicoeur active, Anti-Aliasing FXAA ou desactive",
+    "description": "Le FXAA lisse legerement l'image sans trop flouter les contours (contrairement au MSAA plus couteux). Le rendu multicoeur ameliore la stabilite des frametimes.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cs2-launch-options",
+    "category": "CS2",
+    "title": "Options de lancement Steam : -novid -high",
+    "description": "Clic droit CS2 > Proprietes > Options de lancement. -novid saute la video d'intro, -high lance le processus en priorite haute (redondant si Win32PrioritySeparation est deja regle par l'app, mais ne fait pas de mal).",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cod-render-resolution",
+    "category": "Call of Duty",
+    "title": "Resolution de rendu dynamique -> desactivee, resolution fixe 100%",
+    "description": "La resolution dynamique peut faire fluctuer la nettete de l'image selon la charge GPU. En fixant a 100% (ou une valeur fixe adaptee au GPU), la visibilite reste constante.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cod-filmgrain-fov",
+    "category": "Call of Duty",
+    "title": "Grain de film desactive, FOV eleve, flou de mouvement desactive",
+    "description": "Ces trois effets degradent directement la lisibilite des cibles en mouvement. A desactiver systematiquement en jeu competitif.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "cod-ondemand-textures",
+    "category": "Call of Duty",
+    "title": "Diffusion des textures a la demande : verifier l'espace disque et le debit reserve",
+    "description": "Sur SSD, augmenter le cache/debit reserve aux textures reduit le pop-in (textures floues qui se chargent en retard), qui peut cacher un ennemi une fraction de seconde.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bf-render-scale",
+    "category": "Battlefield",
+    "title": "Resolution scale a 100%, TAA ou FXAA selon preference nettete/perf",
+    "description": "Le TAA ameliore la stabilite de l'image mais peut legerement flouter les cibles lointaines. Si la visibilite prime sur l'esthetique, privilegier FXAA ou desactiver le TAA.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bf-motion-blur-dof",
+    "category": "Battlefield",
+    "title": "Flou de mouvement et profondeur de champ desactives",
+    "description": "Comme pour les autres FPS competitifs, ces effets cinematiques nuisent a la lecture rapide des mouvements ennemis.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "bf-fov-hud",
+    "category": "Battlefield",
+    "title": "FOV eleve (100-110) et HUD simplifie",
+    "description": "Un FOV plus large ameliore la conscience situationnelle (vision peripherique) au prix d'un leger effet fisheye. A ajuster selon le confort visuel.",
+    "action": { "type": "none" }
+  },
+  {
+    "id": "win-game-mode-check",
+    "category": "Parametres Windows",
+    "title": "Verifier que le Mode Jeu Windows est actif",
+    "description": "Parametres > Jeux > Mode Jeu. Deja pilote automatiquement par l'onglet \"Jeux\" de l'app, mais verifiable manuellement ici.",
+    "action": { "type": "ms-settings", "target": "ms-settings:gaming-gamemode", "label": "Ouvrir Mode Jeu" }
+  },
+  {
+    "id": "win-storage-sense",
+    "category": "Parametres Windows",
+    "title": "Storage Sense : verifier qu'aucun nettoyage automatique agressif n'est programme",
+    "description": "Storage Sense peut se declencher en arriere-plan et causer des acces disque impromptus. A regler en manuel ou en frequence faible si tu veux zero activite disque surprise en jeu.",
+    "action": { "type": "ms-settings", "target": "ms-settings:storagesense", "label": "Ouvrir Storage Sense" }
+  },
+  {
+    "id": "win-focus-assist",
+    "category": "Parametres Windows",
+    "title": "Assistant de concentration -> Automatique en plein ecran",
+    "description": "Coupe les notifications Windows/apps pendant les sessions de jeu en plein ecran, evite les pop-ups qui volent le focus ou font tomber les FPS un instant.",
+    "action": { "type": "ms-settings", "target": "ms-settings:quiethours", "label": "Ouvrir Assistant de concentration" }
+  },
+  {
+    "id": "win-multiple-displays",
+    "category": "Parametres Windows",
+    "title": "Un seul ecran actif pendant les sessions competitives (si multi-ecran)",
+    "description": "Un deuxieme ecran actif peut ajouter une charge de composition desktop (DWM) marginale. A desactiver temporairement si tu recherches la derniere fraction de fluidite.",
+    "action": { "type": "ms-settings", "target": "ms-settings:display", "label": "Ouvrir Parametres d'affichage" }
+  }
+]

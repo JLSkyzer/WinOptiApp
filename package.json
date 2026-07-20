@@ -1,0 +1,36 @@
+{
+  "name": "winoptiapp",
+  "version": "1.0.0",
+  "description": "App graphique d'optimisation Windows 11 (perf, FPS, visibilite) - reste 100% natif",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.winoptiapp.app",
+    "productName": "WinOptiApp",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "engine/**/*",
+      "data/**/*",
+      "renderer/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "portable": {
+      "artifactName": "WinOptiApp-Portable.exe"
+    }
+  }
+}
