@@ -16,9 +16,10 @@
     statesById: {},
     pending: {},
     guideSteps: [],
-    guideState: {},
     currentPage: 'dashboard',
-    currentGuideCategory: null,
+    currentGuideEntryId: null,
+    guideSearchQuery: '',
+    guideCollapsedCategories: new Set(),
     isAdmin: true
   };
 
@@ -78,15 +79,13 @@
   }
 
   async function init() {
-    const [catalog, guideSteps, guideState, envInfo] = await Promise.all([
+    const [catalog, guideSteps, envInfo] = await Promise.all([
       window.api.getCatalog(),
       window.api.getGuideSteps(),
-      window.api.getGuideState(),
       window.api.callEngine('GetEnvironmentInfo')
     ]);
     state.catalog = catalog;
     state.guideSteps = guideSteps;
-    state.guideState = guideState || {};
     state.isAdmin = envInfo.ok ? !!envInfo.data.isAdmin : true;
     await refreshStates();
     renderAdminBanner();
@@ -483,55 +482,173 @@
   }
 
   function renderGuide() {
-    header('Guide manuel', 'Reglages qui ne peuvent pas etre automatises : panneau NVIDIA, BIOS/UEFI, moniteur, parametres in-game. Coche chaque etape au fur et a mesure.');
-    const categories = Array.from(new Set(state.guideSteps.map((s) => s.category)));
-    if (!state.currentGuideCategory || !categories.includes(state.currentGuideCategory)) {
-      state.currentGuideCategory = categories[0];
-    }
-    const nav = document.createElement('div');
-    nav.className = 'guide-nav';
-    categories.forEach((cat) => {
-      const tab = document.createElement('div');
-      tab.className = 'guide-tab' + (state.currentGuideCategory === cat ? ' active' : '');
-      tab.textContent = cat;
-      tab.addEventListener('click', () => { state.currentGuideCategory = cat; renderPage(); });
-      nav.appendChild(tab);
-    });
-    contentEl.appendChild(nav);
+    header('Guide manuel', 'Reglages qui ne peuvent pas etre automatises : panneau NVIDIA, BIOS/UEFI, moniteur, parametres in-game. Selectionne une entree a gauche pour voir le detail complet.');
 
-    const steps = state.guideSteps.filter((s) => s.category === state.currentGuideCategory);
-    steps.forEach((step) => {
-      const done = !!state.guideState[step.id];
-      const row = document.createElement('div');
-      row.className = 'guide-step' + (done ? ' done' : '');
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = done;
-      cb.addEventListener('change', async () => {
-        state.guideState[step.id] = cb.checked;
-        await window.api.setGuideStepChecked(step.id, cb.checked);
-        row.classList.toggle('done', cb.checked);
-      });
-      row.appendChild(cb);
-      const main = document.createElement('div');
-      const title = document.createElement('div');
-      title.className = 'guide-step-title';
-      title.textContent = step.title;
-      main.appendChild(title);
-      const desc = document.createElement('div');
-      desc.className = 'guide-step-desc';
-      desc.textContent = step.description;
-      main.appendChild(desc);
-      if (step.action && step.action.type !== 'none') {
-        const link = document.createElement('span');
-        link.className = 'link-btn';
-        link.textContent = step.action.label || 'Ouvrir';
-        link.addEventListener('click', () => window.api.openExternalSettings(step.action.target));
-        main.appendChild(link);
-      }
-      row.appendChild(main);
-      contentEl.appendChild(row);
+    const layout = document.createElement('div');
+    layout.className = 'guide-layout';
+    contentEl.appendChild(layout);
+
+    const listPane = document.createElement('div');
+    listPane.className = 'guide-list-pane';
+    layout.appendChild(listPane);
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'guide-search';
+    searchInput.placeholder = 'Rechercher un reglage...';
+    searchInput.value = state.guideSearchQuery;
+    listPane.appendChild(searchInput);
+
+    const listBody = document.createElement('div');
+    listPane.appendChild(listBody);
+
+    const detailPane = document.createElement('div');
+    detailPane.className = 'guide-detail-pane';
+    layout.appendChild(detailPane);
+
+    function refreshDetail() {
+      renderGuideDetail(detailPane);
+    }
+
+    function refreshList() {
+      renderGuideEntryList(listBody, searchInput.value, refreshDetail, refreshList);
+    }
+
+    searchInput.addEventListener('input', () => {
+      state.guideSearchQuery = searchInput.value;
+      refreshList();
     });
+
+    refreshList();
+    refreshDetail();
+  }
+
+  function renderGuideEntryList(listBody, query, onSelect, refreshSelf) {
+    listBody.innerHTML = '';
+    const q = query.trim().toLowerCase();
+    const categories = Array.from(new Set(state.guideSteps.map((s) => s.category)));
+
+    categories.forEach((cat) => {
+      const entries = state.guideSteps.filter((s) => s.category === cat &&
+        (!q || s.title.toLowerCase().includes(q) || (s.summary || '').toLowerCase().includes(q)));
+      if (!entries.length) return;
+
+      const section = document.createElement('div');
+      section.className = 'guide-category-section';
+      const collapsed = state.guideCollapsedCategories.has(cat);
+      section.classList.toggle('collapsed', collapsed);
+
+      const catHeader = document.createElement('div');
+      catHeader.className = 'guide-category-header';
+      catHeader.textContent = cat;
+      catHeader.addEventListener('click', () => {
+        if (state.guideCollapsedCategories.has(cat)) state.guideCollapsedCategories.delete(cat);
+        else state.guideCollapsedCategories.add(cat);
+        refreshSelf();
+      });
+      section.appendChild(catHeader);
+
+      const itemsWrap = document.createElement('div');
+      itemsWrap.className = 'guide-category-items';
+      entries.forEach((entry) => {
+        const item = document.createElement('div');
+        item.className = 'guide-list-item' + (state.currentGuideEntryId === entry.id ? ' active' : '');
+        const title = document.createElement('div');
+        title.className = 'guide-list-item-title';
+        title.textContent = entry.title;
+        item.appendChild(title);
+        const summary = document.createElement('div');
+        summary.className = 'guide-list-item-summary';
+        summary.textContent = entry.summary;
+        item.appendChild(summary);
+        item.addEventListener('click', () => {
+          state.currentGuideEntryId = entry.id;
+          onSelect();
+          refreshSelf();
+        });
+        itemsWrap.appendChild(item);
+      });
+      section.appendChild(itemsWrap);
+      listBody.appendChild(section);
+    });
+
+    if (!listBody.children.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Aucun reglage ne correspond a la recherche.';
+      listBody.appendChild(empty);
+    }
+  }
+
+  function renderGuideDetail(detailPane) {
+    detailPane.innerHTML = '';
+    const entry = state.guideSteps.find((s) => s.id === state.currentGuideEntryId);
+    if (!entry) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Selectionne une entree a gauche.';
+      detailPane.appendChild(empty);
+      return;
+    }
+
+    const title = document.createElement('h2');
+    title.className = 'guide-detail-title';
+    title.textContent = entry.title;
+    detailPane.appendChild(title);
+
+    (entry.sections || []).forEach((sec) => {
+      const secTitle = document.createElement('div');
+      secTitle.className = 'guide-detail-section-title';
+      secTitle.textContent = sec.heading;
+      detailPane.appendChild(secTitle);
+      if (sec.steps) {
+        const ol = document.createElement('ol');
+        ol.className = 'guide-detail-steps';
+        sec.steps.forEach((s) => {
+          const li = document.createElement('li');
+          li.textContent = s;
+          ol.appendChild(li);
+        });
+        detailPane.appendChild(ol);
+      } else if (sec.body) {
+        const p = document.createElement('p');
+        p.className = 'guide-detail-body';
+        p.textContent = sec.body;
+        detailPane.appendChild(p);
+      }
+    });
+
+    if (entry.action && entry.action.type !== 'none') {
+      const link = document.createElement('span');
+      link.className = 'link-btn';
+      link.textContent = entry.action.label || 'Ouvrir';
+      link.addEventListener('click', () => window.api.openExternalSettings(entry.action.target));
+      detailPane.appendChild(link);
+    }
+
+    if (entry.sourceUrl) {
+      const src = document.createElement('span');
+      src.className = 'link-btn';
+      src.textContent = entry.sourceLabel || 'Voir la source';
+      src.addEventListener('click', () => window.api.openExternalSettings(entry.sourceUrl));
+      detailPane.appendChild(src);
+    }
+
+    if (entry.relatedTweakId) {
+      const related = state.catalog.find((e) => e.id === entry.relatedTweakId);
+      if (related) {
+        const relLink = document.createElement('div');
+        relLink.className = 'guide-related-link';
+        relLink.textContent = 'Voir le tweak automatise associe -> ' + related.label;
+        relLink.addEventListener('click', () => {
+          state.currentPage = related.category;
+          state.pending = {};
+          renderSidebar();
+          renderPage();
+        });
+        detailPane.appendChild(relLink);
+      }
+    }
   }
 
   async function renderRestorePage() {
