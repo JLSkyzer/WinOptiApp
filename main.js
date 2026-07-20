@@ -9,22 +9,6 @@ const ENGINE_PATH = path.join(__dirname, 'engine', 'Engine.ps1');
 const CATALOG_PATH = path.join(__dirname, 'data', 'tweaks-catalog.json');
 const GUIDE_STEPS_PATH = path.join(__dirname, 'data', 'guide-steps.json');
 
-function getGuideStatePath() {
-  return path.join(app.getPath('userData'), 'guide-state.json');
-}
-
-function loadGuideState() {
-  try {
-    return JSON.parse(fs.readFileSync(getGuideStatePath(), 'utf8'));
-  } catch {
-    return {};
-  }
-}
-
-function saveGuideState(state) {
-  fs.writeFileSync(getGuideStatePath(), JSON.stringify(state, null, 2), 'utf8');
-}
-
 // Lance Engine.ps1 avec une action nommee. Le payload (si present) est ecrit dans un fichier
 // temporaire pour eviter tout probleme d'echappement de guillemets/espaces en ligne de commande.
 function runEngine(action, payload) {
@@ -94,18 +78,6 @@ ipcMain.handle('data:getCatalog', async () => {
 
 ipcMain.handle('data:getGuideSteps', async () => {
   return JSON.parse(fs.readFileSync(GUIDE_STEPS_PATH, 'utf8'));
-});
-
-// --- IPC : etat du guide manuel (checklist persistante, cote app, pas moteur PowerShell) ---
-ipcMain.handle('guide:getState', async () => {
-  return loadGuideState();
-});
-
-ipcMain.handle('guide:setStepChecked', async (_event, stepId, checked) => {
-  const state = loadGuideState();
-  state[stepId] = checked;
-  saveGuideState(state);
-  return { ok: true };
 });
 
 // --- IPC : moteur PowerShell (tout ce qui touche reellement au systeme) ---
