@@ -135,7 +135,7 @@ git commit -m "Ajouter la categorie Monitoring / Benchmark au guide (HWiNFO, Aft
 **Files:**
 - Modify: `data/guide-steps.json` (ajout apres l'entree `tool-capframex` de la Task 1, avant le `]` final)
 
-- [ ] **Step 1 : Ajouter les 3 entrees JSON suivantes**
+- [x] **Step 1 : Ajouter les 3 entrees JSON suivantes**
 
 Localiser la fin de l'entree `tool-capframex` ajoutee a la Task 1 (qui se termine par `  },` suivi de `]`). Remplacer :
 
@@ -199,17 +199,19 @@ par :
 ]
 ```
 
-- [ ] **Step 2 : Verifier la validite JSON**
+- [x] **Step 2 : Verifier la validite JSON**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/guide-steps.json','utf8')); console.log('OK')"`
 Expected: `OK`
 
-- [ ] **Step 3 : Commit**
+- [x] **Step 3 : Commit**
 
 ```bash
 git add data/guide-steps.json
 git commit -m "Ajouter la categorie Latence / Input au guide (LatencyMon, Reflex Analyzer, MarkC Mouse Fix)"
 ```
+
+**Statut d'execution (Task 2) :** DONE. Implementeur (modele haiku) : commit `3a96e5c`. Reviewer spec-compliance : "Spec compliant" (3 entrees exactes, 34 entrees totales confirmees, `tool-nvidia-reflex-analyzer` sans champ `action` conforme, `tool-markc-mouse-fix` avec `relatedTweakId`+`action.type:"link"` conforme). Reviewer code-quality : "Approuve" (aucun probleme important ; `relatedTweakId` verifie valide contre `mouse-acceleration-disable` dans tweaks-catalog.json ; 2 remarques mineures purement cosmetiques sur la densite du paragraphe Details de l'entree Reflex et sur la premiere utilisation du type `"link"`, aucune correction requise).
 
 ---
 
