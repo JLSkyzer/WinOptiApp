@@ -677,4 +677,81 @@
     "label": "Priorité haute de csrss.exe",
     "description": "Tente d'élever la priorité du processus système csrss.exe. Mécanisme hérité d'avant les protections modernes (Protected Process Light) : sur Windows 11, Windows refuse généralement ce changement et l'application le signale honnêtement au lieu d'afficher un faux succès."
   }
+  ,
+  {
+    "id": "global-timer-resolution",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel",
+    "name": "GlobalTimerResolutionRequests",
+    "regType": "DWord",
+    "onValue": 1,
+    "offValue": 0,
+    "defaultValue": 0,
+    "requiresRestart": true,
+    "label": "Restaurer la résolution timer fine (1ms) pour les jeux",
+    "description": "Autorise à nouveau les applications à demander une résolution de timer système fine (1ms), un comportement que Microsoft a restreint pour économiser l'énergie. Un processus mal codé en arrière-plan peut augmenter la consommation de 10 à 25%."
+  },
+  {
+    "id": "dynamic-tick-disable",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "DynamicTickDisable",
+    "requiresRestart": true,
+    "label": "Désactiver le Dynamic Tick",
+    "description": "Force le minuteur système à tourner en continu au lieu de réduire sa fréquence en veille pour économiser l'énergie (bcdedit /set disabledynamictick yes). Augmente légèrement la consommation/chaleur au repos. Effectif seulement après redémarrage."
+  },
+  {
+    "id": "tsc-sync-policy-enhanced",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "TscSyncPolicyEnhanced",
+    "requiresRestart": true,
+    "label": "Politique de synchronisation TSC renforcée",
+    "description": "Force Windows à synchroniser plus strictement le compteur TSC entre cœurs (bcdedit /set tscsyncpolicy Enhanced). Tweak de niche, surtout utile sur CPU multi-cœurs avec TSC instable. Effectif seulement après redémarrage."
+  },
+  {
+    "id": "hpet-disable",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "HpetDisable",
+    "requiresRestart": true,
+    "label": "Désactiver le HPET (High Precision Event Timer)",
+    "description": "Retire le forçage de l'horloge plateforme (bcdedit useplatformclock), laissant Windows choisir automatiquement sa source d'horloge (généralement le TSC sur CPU moderne). Effet non consensuel selon les configurations — teste et compare. Effectif seulement après redémarrage."
+  },
+  {
+    "id": "mmcss-no-lazy-mode",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+    "name": "NoLazyMode",
+    "regType": "DWord",
+    "onValue": 1,
+    "offValue": 0,
+    "defaultValue": 0,
+    "requiresRestart": true,
+    "label": "Désactiver le \"Lazy Mode\" MMCSS",
+    "description": "Empêche le planificateur multimédia MMCSS de retarder paresseusement le traitement de certaines tâches. Non documenté officiellement par Microsoft, effet empirique selon la communauté."
+  },
+  {
+    "id": "irq-priority-tuning",
+    "category": "latence",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "IrqPriorityTuning",
+    "requiresRestart": true,
+    "label": "Priorité IRQ horloge/GPU",
+    "description": "Priorise l'IRQ8 (horloge système) et l'IRQ du GPU détecté dynamiquement sur ta machine. Mécanisme hérité, effet non garanti — inopérant si le GPU utilise le MSI Mode (pas d'IRQ classique à prioriser)."
+  }
 ]

@@ -800,6 +800,107 @@ function Set-HandlerState_CsrssPriority {
 }
 
 # ============================================================
+# Handlers nommes : Latence
+# ============================================================
+
+function Get-HandlerState_DynamicTickDisable {
+    $state = Get-EngineState 'dynamic-tick-disable'
+    if ($state -and $state.applied) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_DynamicTickDisable {
+    param([bool]$Enabled)
+    if ($Enabled) {
+        & bcdedit /set '{current}' disabledynamictick yes | Out-Null
+    } else {
+        & bcdedit /deletevalue '{current}' disabledynamictick 2>&1 | Out-Null
+    }
+    Save-EngineState 'dynamic-tick-disable' @{ applied = $Enabled }
+    Write-EngineLog "Dynamic Tick desactive -> Enabled=$Enabled (effectif au prochain redemarrage)" 'OK'
+}
+
+function Get-HandlerState_TscSyncPolicyEnhanced {
+    $state = Get-EngineState 'tsc-sync-policy-enhanced'
+    if ($state -and $state.applied) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_TscSyncPolicyEnhanced {
+    param([bool]$Enabled)
+    if ($Enabled) {
+        & bcdedit /set '{current}' tscsyncpolicy Enhanced | Out-Null
+    } else {
+        & bcdedit /deletevalue '{current}' tscsyncpolicy 2>&1 | Out-Null
+    }
+    Save-EngineState 'tsc-sync-policy-enhanced' @{ applied = $Enabled }
+    Write-EngineLog "TSC Sync Policy Enhanced -> Enabled=$Enabled (effectif au prochain redemarrage)" 'OK'
+}
+
+function Get-HandlerState_HpetDisable {
+    $state = Get-EngineState 'hpet-disable'
+    if ($state -and $state.applied) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_HpetDisable {
+    param([bool]$Enabled)
+    if ($Enabled) {
+        & bcdedit /deletevalue '{current}' useplatformclock 2>&1 | Out-Null
+    } else {
+        & bcdedit /set '{current}' useplatformclock true | Out-Null
+    }
+    Save-EngineState 'hpet-disable' @{ applied = $Enabled }
+    Write-EngineLog "HPET (useplatformclock) -> desactive=$Enabled (effectif au prochain redemarrage)" 'OK'
+}
+
+function Get-GpuIrqNumber {
+    $gpu = Get-CimInstance Win32_PNPAllocatedResource -ErrorAction SilentlyContinue | Where-Object {
+        $_.Antecedent -match 'Win32_IRQResource' -and $_.Dependent -match 'Win32_PNPEntity'
+    }
+    $displayDevices = Get-PnpDevice -Class Display -Status OK -ErrorAction SilentlyContinue
+    foreach ($d in $displayDevices) {
+        $match = $gpu | Where-Object { $_.Dependent -match [regex]::Escape($d.DeviceID) }
+        if ($match) {
+            $irqMatch = [regex]::Match($match.Antecedent, 'IRQNumber="(\d+)"')
+            if ($irqMatch.Success) { return [int]$irqMatch.Groups[1].Value }
+        }
+    }
+    return $null
+}
+
+function Get-HandlerState_IrqPriorityTuning {
+    $v = Get-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl' -Name 'IRQ8Priority'
+    if ("$v" -eq '1') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_IrqPriorityTuning {
+    param([bool]$Enabled)
+    $path = 'HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl'
+    if ($Enabled) {
+        Backup-RegistryKey -KeyPath $path -BackupName 'irq-priority-tuning' | Out-Null
+        Set-RegValue -Path $path -Name 'IRQ8Priority' -Value 1 -Type DWord
+        $gpuIrq = Get-GpuIrqNumber
+        if ($gpuIrq) {
+            Set-RegValue -Path $path -Name "IRQ${gpuIrq}Priority" -Value 2 -Type DWord
+            Save-EngineState 'irq-priority-tuning' @{ gpuIrq = $gpuIrq }
+            Write-EngineLog "Priorite IRQ8 (horloge) + IRQ$gpuIrq (GPU detecte) appliquee" 'OK'
+        } else {
+            Save-EngineState 'irq-priority-tuning' @{ gpuIrq = $null }
+            Write-EngineLog 'Priorite IRQ8 appliquee ; IRQ GPU non detecte (MSI Mode actif ?), ignore' 'WARN'
+        }
+    } else {
+        Remove-RegValue -Path $path -Name 'IRQ8Priority'
+        $state = Get-EngineState 'irq-priority-tuning'
+        if ($state -and $state.gpuIrq) {
+            Remove-RegValue -Path $path -Name "IRQ$($state.gpuIrq)Priority"
+        }
+        Write-EngineLog 'Priorite IRQ retiree' 'OK'
+    }
+}
+
+# ============================================================
 # Listes dynamiques : demarrage, debloat, preference GPU
 # ============================================================
 
