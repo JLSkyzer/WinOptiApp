@@ -661,6 +661,67 @@ function Set-HandlerState_SvchostSplitDynamic {
 }
 
 # ============================================================
+# Handlers nommes : Audio
+# ============================================================
+
+function Get-HandlerState_MmcssAudioPriority {
+    $v = Get-RegValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio' -Name 'Priority'
+    if ("$v" -eq '8') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_MmcssAudioPriority {
+    param([bool]$Enabled)
+    $audioPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio'
+    $proAudioPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio'
+    if ($Enabled) {
+        foreach ($p in @($audioPath, $proAudioPath)) {
+            Set-RegValue -Path $p -Name 'Priority' -Value 8 -Type DWord
+            Set-RegValue -Path $p -Name 'Scheduling Category' -Value 'High' -Type String
+            Set-RegValue -Path $p -Name 'SFIO Priority' -Value 'High' -Type String
+        }
+    } else {
+        foreach ($p in @($audioPath, $proAudioPath)) {
+            Set-RegValue -Path $p -Name 'Priority' -Value 6 -Type DWord
+            Set-RegValue -Path $p -Name 'Scheduling Category' -Value 'Medium' -Type String
+            Set-RegValue -Path $p -Name 'SFIO Priority' -Value 'Normal' -Type String
+        }
+    }
+    Write-EngineLog "Priorite MMCSS Audio/Pro Audio -> Enabled=$Enabled" 'OK'
+}
+
+$Script:AudioRenderPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render'
+$Script:PkeyFriendlyName = '{a45c254e-df1c-4efd-8020-67d146a850e0},14'
+$Script:PkeyDisableSysFx = '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5'
+
+function Invoke-ListAudioDevices {
+    $result = @()
+    if (-not (Test-Path $Script:AudioRenderPath)) { return ,$result }
+    $deviceKeys = Get-ChildItem -Path $Script:AudioRenderPath -ErrorAction SilentlyContinue
+    foreach ($dk in $deviceKeys) {
+        $guid = $dk.PSChildName
+        $propsPath = Join-Path $dk.PSPath 'Properties'
+        $name = Get-RegValue -Path $propsPath -Name $Script:PkeyFriendlyName
+        if (-not $name) { $name = $guid }
+        $fxPath = Join-Path $dk.PSPath 'FxProperties'
+        $disabledVal = Get-RegValue -Path $fxPath -Name $Script:PkeyDisableSysFx
+        $disabled = ("$disabledVal" -eq '1')
+        $result += [PSCustomObject]@{ id = $guid; name = "$name"; enhancementsDisabled = $disabled }
+    }
+    return ,$result
+}
+
+function Invoke-SetAudioDeviceEffects {
+    param($Payload)
+    $fxPath = Join-Path $Script:AudioRenderPath "$($Payload.deviceId)\FxProperties"
+    if (-not (Test-Path $fxPath)) { New-Item -Path $fxPath -Force | Out-Null }
+    Backup-RegistryKey -KeyPath $fxPath -BackupName "audio-fx-$($Payload.deviceId)" | Out-Null
+    $value = if ($Payload.disabled) { 1 } else { 0 }
+    Set-RegValue -Path $fxPath -Name $Script:PkeyDisableSysFx -Value $value -Type DWord
+    Write-EngineLog "Ameliorations audio peripherique $($Payload.deviceId) -> disabled=$($Payload.disabled)" 'OK'
+}
+
+# ============================================================
 # Listes dynamiques : demarrage, debloat, preference GPU
 # ============================================================
 
@@ -913,6 +974,8 @@ try {
         'ListFullscreenOptApps' { Invoke-ListFullscreenOptApps }
         'AddFullscreenOptApp' { Invoke-AddFullscreenOptApp -Payload $Script:Payload; $null }
         'RemoveFullscreenOptApp' { Invoke-RemoveFullscreenOptApp -Payload $Script:Payload; $null }
+        'ListAudioDevices' { Invoke-ListAudioDevices }
+        'SetAudioDeviceEffects' { Invoke-SetAudioDeviceEffects -Payload $Script:Payload; $null }
         'CreateRestorePoint' { Invoke-CreateRestorePoint -Payload $Script:Payload; $null }
         'ListRestorePoints' { Invoke-ListRestorePoints }
         'GetEnvironmentInfo' { [PSCustomObject]@{ isAdmin = (Test-IsElevated) } }

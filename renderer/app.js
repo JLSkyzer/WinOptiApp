@@ -359,6 +359,7 @@
     if (entry.type === 'bloat-list') return renderBloatList(entry);
     if (entry.type === 'exe-list') return renderGpuPrefList(entry);
     if (entry.type === 'fullscreen-opt-list') return renderFullscreenOptList(entry);
+    if (entry.type === 'audio-device-list') return renderAudioDeviceList(entry);
   }
 
   function sectionTitle(text) {
@@ -537,6 +538,45 @@
           await load();
         });
         row.appendChild(btn);
+        listHolder.appendChild(row);
+      });
+    }
+    await load();
+  }
+
+  async function renderAudioDeviceList(entry) {
+    sectionTitle(entry.label);
+    const listHolder = document.createElement('div');
+    contentEl.appendChild(listHolder);
+
+    async function load() {
+      listHolder.innerHTML = '<div class="spinner-note">Chargement...</div>';
+      const res = await window.api.callEngine('ListAudioDevices');
+      listHolder.innerHTML = '';
+      if (!res.ok) { listHolder.innerHTML = `<div class="empty-state">${res.error}</div>`; return; }
+      if (!res.data || !res.data.length) { listHolder.innerHTML = '<div class="empty-state">Aucun peripherique de sortie audio detecte.</div>'; return; }
+      res.data.forEach((device) => {
+        const row = document.createElement('div');
+        row.className = 'list-row';
+        const main = document.createElement('div');
+        main.className = 'list-row-main';
+        const title = document.createElement('div');
+        title.className = 'list-row-title';
+        title.textContent = device.name;
+        main.appendChild(title);
+        row.appendChild(main);
+        const sw = document.createElement('div');
+        sw.className = 'switch' + (device.enhancementsDisabled ? ' on' : '');
+        const knob = document.createElement('div');
+        knob.className = 'switch-knob';
+        sw.appendChild(knob);
+        sw.addEventListener('click', async () => {
+          const newDisabled = !(sw.classList.contains('on'));
+          const r = await window.api.callEngine('SetAudioDeviceEffects', { deviceId: device.id, disabled: newDisabled });
+          if (!r.ok) { toast('Echec: ' + r.error, false); return; }
+          sw.classList.toggle('on', newDisabled);
+        });
+        row.appendChild(sw);
         listHolder.appendChild(row);
       });
     }

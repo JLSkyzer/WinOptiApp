@@ -574,4 +574,25 @@
     "label": "Désactiver la synchronisation cloud du presse-papiers",
     "description": "Coupe la synchronisation du presse-papiers entre appareils Microsoft (\"Sync across your devices\"). N'affecte pas l'historique local du presse-papiers (Win+V)."
   }
+  ,
+  {
+    "id": "mmcss-audio-priority",
+    "category": "audio",
+    "risk": "intermediaire",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "MmcssAudioPriority",
+    "requiresRestart": false,
+    "label": "Priorité MMCSS renforcée pour l'audio",
+    "description": "Augmente la priorité CPU/GPU accordée aux tâches multimédias \"Audio\" et \"Pro Audio\" par le planificateur MMCSS. Réduit les craquements/glitches audio sous charge CPU importante."
+  },
+  {
+    "id": "audio-enhancements-disable",
+    "category": "audio",
+    "risk": "intermediaire",
+    "type": "audio-device-list",
+    "requiresRestart": false,
+    "label": "Désactiver les améliorations audio par périphérique",
+    "description": "Coupe la virtualisation/égalisation logicielle de Windows (par périphérique de sortie), qui ajoute de la latence. Laisse le logiciel du périphérique (casque, DAC) gérer les effets si besoin."
+  }
 ]
