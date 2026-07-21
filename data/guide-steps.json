@@ -368,7 +368,7 @@
     "category": "Gestion des process",
     "title": "Process Lasso - automatisation des priorites et affinites CPU",
     "summary": "Regles automatiques de priorite/affinite par process, en complement des tweaks systeme de l'app.",
-    "action": { "type": "download", "target": "https://bitsum.com/download/", "label": "Telecharger Process Lasso" },
+    "action": { "type": "download", "target": "https://bitsum.com/processlasso/", "label": "Telecharger Process Lasso" },
     "sections": [
       { "heading": "Details", "body": "Process Lasso applique automatiquement des regles de priorite CPU et d'affinite (quels coeurs un process peut utiliser) par nom d'executable, en continu et sans intervention manuelle. Utile pour forcer une priorite haute sur un jeu specifique ou empecher un processus en arriere-plan de monopoliser un coeur, en complement des reglages systeme globaux deja geres par l'app." },
       { "heading": "Etapes", "steps": [
@@ -376,7 +376,7 @@
         "Dans l'onglet ProBalance, laisser le comportement par defaut (reduction automatique de priorite des process qui consomment trop de CPU en arriere-plan).",
         "Pour un jeu specifique, ajouter une regle dans \"Regles de process\" fixant sa priorite sur \"Haute\" et, si le CPU a beaucoup de coeurs, une affinite excluant un coeur reserve aux taches systeme."
       ] },
-      { "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (priorite CPU renforcee au premier plan), SvchostSplitDynamic (fusion des processus svchost.exe pour reduire l'overhead memoire) et CsrssPriority (priorite du sous-systeme Windows). Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec ces tweaks : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement un des tweaks ci-dessus (par exemple, une regle Process Lasso qui repasserait csrss.exe en priorite normale)." }
+      { "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (priorite CPU renforcee au premier plan) et SvchostSplitDynamic (fusion des processus svchost.exe pour reduire l'overhead memoire). Elle propose aussi CsrssPriority (tentative de priorite haute pour le sous-systeme Windows csrss.exe), mais ce reglage est generalement refuse par Windows 11 lui-meme (protections modernes du systeme) et n'a donc le plus souvent pas d'effet reel. Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec les tweaks actifs ci-dessus : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement Win32PrioritySeparation ou SvchostSplitDynamic (par exemple, une regle Process Lasso qui repasserait un process en priorite basse alors qu'il devrait beneficier de la priorite premier plan renforcee)." }
     ]
   }
 ]
