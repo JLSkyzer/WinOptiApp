@@ -51,7 +51,7 @@ Notes :
 L'entree Process Lasso comporte une section supplementaire :
 
 ```json
-{ "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (planification CPU foreground/background), SvchostSplitDynamic (isolation des processus svchost.exe) et CsrssPriority (priorite du sous-systeme Windows). Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec ces tweaks : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement un des tweaks ci-dessus (par exemple, une regle Process Lasso qui repasserait csrss.exe en priorite normale)." }
+{ "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (priorite CPU renforcee au premier plan), SvchostSplitDynamic (fusion des processus svchost.exe pour reduire l'overhead memoire) et CsrssPriority (priorite du sous-systeme Windows). Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec ces tweaks : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement un des tweaks ci-dessus (par exemple, une regle Process Lasso qui repasserait csrss.exe en priorite normale)." }
 ```
 
 ## Categorisation
