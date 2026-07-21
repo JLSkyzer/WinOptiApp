@@ -1062,7 +1062,7 @@ git commit -m "Enregistrer les 4 nouvelles categories (audio, peripheriques, lat
 - Modify: `engine/Engine.ps1` (nouvelle section handler + 2 nouvelles actions `Invoke-*AudioDevice*` + dispatch)
 - Modify: `renderer/app.js` (dispatch `renderSpecialWidget` + fonction `renderAudioDeviceList`)
 
-- [ ] **Step 1 : Ajouter les 2 entrées catalogue**
+- [x] **Step 1 : Ajouter les 2 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -1090,7 +1090,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter la section handler + les actions de liste dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter la section handler + les actions de liste dans `engine/Engine.ps1`**
 
 Ajouter une nouvelle section juste avant `# ============================================================` / `# Listes dynamiques : demarrage, debloat, preference GPU` (après la section "Handlers nommes : Demarrage" ajoutée en Task 5) :
 
@@ -1157,7 +1157,7 @@ function Invoke-SetAudioDeviceEffects {
 }
 ```
 
-- [ ] **Step 3 : Câbler les 2 nouvelles actions dans le dispatch principal**
+- [x] **Step 3 : Câbler les 2 nouvelles actions dans le dispatch principal**
 
 Dans le bloc `switch ($Action)`, ajouter après les 3 lignes `*FullscreenOptApp*` ajoutées en Task 4 :
 
@@ -1166,7 +1166,7 @@ Dans le bloc `switch ($Action)`, ajouter après les 3 lignes `*FullscreenOptApp*
         'SetAudioDeviceEffects' { Invoke-SetAudioDeviceEffects -Payload $Script:Payload; $null }
 ```
 
-- [ ] **Step 4 : Ajouter le rendu UI dans `renderer/app.js`**
+- [x] **Step 4 : Ajouter le rendu UI dans `renderer/app.js`**
 
 Remplacer la ligne (mise à jour en Task 4) :
 
@@ -1224,18 +1224,20 @@ Puis ajouter la fonction `renderAudioDeviceList` juste après `renderFullscreenO
   }
 ```
 
-- [ ] **Step 5 : Vérifier**
+- [x] **Step 5 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 Run: `node --check renderer/app.js` → aucune sortie
 
-- [ ] **Step 6 : Commit**
+- [x] **Step 6 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1 renderer/app.js
 git commit -m "Ajouter la categorie Audio (mmcss-audio-priority + audio-device-list)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `21e952e`). Spec-compliance : ✅ conforme (revue independante, diff verifie point par point incl. ancrages exacts). Code-quality : **Approved** — 2 points Mineurs releves sans action requise : (1) `Set-HandlerState_MmcssAudioPriority` n'a pas de `Backup-RegistryKey`, mais reproduit exactement le pattern deja present du handler soeur preexistant `MMCSSGamesPriority` (incoherence heritee, pas une regression de cette tache) ; (2) virgule isolee sur sa propre ligne dans le JSON (style deja utilise partout ailleurs dans ce fichier pour les insertions, cosmetique). Verifications syntaxiques toutes OK.
 
 ---
 
