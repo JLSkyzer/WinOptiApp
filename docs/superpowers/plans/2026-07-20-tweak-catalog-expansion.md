@@ -1441,7 +1441,7 @@ git commit -m "Ajouter la categorie Peripheriques (6 tweaks : souris, clavier, U
 - Modify: `data/tweaks-catalog.json` (ajouter 6 entrées)
 - Modify: `engine/Engine.ps1` (nouvelle section handler, 4 paires de fonctions ; `global-timer-resolution`/`mmcss-no-lazy-mode` sont `kind: registry`, aucune fonction requise)
 
-- [ ] **Step 1 : Ajouter les 6 entrées catalogue**
+- [x] **Step 1 : Ajouter les 6 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -1525,7 +1525,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
 
 Ajouter une nouvelle section juste avant `# ============================================================` / `# Listes dynamiques : demarrage, debloat, preference GPU` (après la section Périphériques ajoutée en Task 10) :
 
@@ -1636,17 +1636,19 @@ Remarques de conception :
 - `dynamic-tick-disable`/`tsc-sync-policy-enhanced`/`hpet-disable` suivent tous le motif "état sauvegardé via `Save-EngineState`" (identique à `power-plan-ultimate`) plutôt que de parser la sortie texte de `bcdedit /enum`, qui est localisée selon la langue d'affichage Windows et donc fragile à analyser de façon fiable.
 - `irq-priority-tuning` découvre dynamiquement l'IRQ du GPU via WMI (`Win32_PNPAllocatedResource`) au lieu d'un numéro d'IRQ figé en dur — si le GPU utilise déjà le MSI Mode, il n'a plus d'IRQ classique et la fonction le journalise en `WARN` sans échouer (l'IRQ8 horloge est tout de même appliquée).
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter la categorie Latence (timer, dynamic tick, TSC, HPET, MMCSS, IRQ)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `a51c570`). Spec-compliance : ✅ conforme (revue independante, diff verifie champ par champ, ancrages d'insertion exacts, aucune fonction moteur superflue pour les 2 tweaks `kind: registry`). Code-quality : **Changes requested** puis corrige (commit `49571cf`) — 2 points Important releves et corriges : (1) `DynamicTickDisable`/`TscSyncPolicyEnhanced` persistaient l'etat "applied" sans verifier le succes de `bcdedit /set`, contrairement a la convention suivie par `Set-HandlerState_PowerPlanUltimate` (qui verifie avant de sauvegarder) — ajout d'une verification `$LASTEXITCODE` + `throw` ; (2) `HpetDisable` en etat "off" forcait activement `useplatformclock=true` au lieu de retirer la valeur, ce qui n'est pas le vrai defaut Windows (cle absente) et rompait la symetrie avec les 2 handlers voisins du meme commit — unifie sur `/deletevalue` dans les deux branches. Points Mineurs/deferres sans fix (edge-cases a faible risque, hors perimetre strict de la tache) : absence de nettoyage de l'ancien IRQ GPU enregistre si `IrqPriorityTuning` est active deux fois de suite sans passage par "off" intermediaire ; la banniere admin de `renderer/app.js` ne mentionne pas encore que les 3 tweaks bcdedit necessitent une elevation (deja vrai avant ce commit pour d'autres tweaks non lies a bcdedit). Verifications syntaxiques toutes OK.
 
 ---
 
