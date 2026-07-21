@@ -266,5 +266,53 @@
         "Les icones apparaissent immediatement, sans besoin de redemarrer l'Explorateur ni la machine."
       ] }
     ]
+  },
+  {
+    "id": "tool-hwinfo",
+    "category": "Monitoring / Benchmark",
+    "title": "HWiNFO - monitoring temperatures/frequences/throttle en temps reel",
+    "summary": "Detecte les throttles thermiques ou d'alimentation invisibles autrement.",
+    "action": { "type": "download", "target": "https://www.hwinfo.com/download/", "label": "Telecharger HWiNFO" },
+    "sections": [
+      { "heading": "Details", "body": "HWiNFO expose en temps reel les temperatures, frequences et evenements de throttle (thermique ou limite de puissance) du CPU et du GPU. Utile pour diagnostiquer un FPS instable ou des chutes ponctuelles dues a un throttle silencieux que le jeu ne signale pas." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger la version \"Portable\" sur la page officielle hwinfo.com (pas besoin d'installation).",
+        "Au lancement, choisir le mode \"Sensors-only\" pour eviter le rapport materiel complet a chaque demarrage.",
+        "Dans la fenetre Sensors, reperer les capteurs de throttle CPU/GPU et les temperatures pour surveiller pendant une session de jeu.",
+        "Activer le logging (bouton en bas de la fenetre Sensors) si tu veux analyser les valeurs apres coup dans un fichier CSV."
+      ] }
+    ]
+  },
+  {
+    "id": "tool-msi-afterburner-rtss",
+    "category": "Monitoring / Benchmark",
+    "title": "MSI Afterburner + RivaTuner Statistics Server (RTSS) - overclocking GPU et overlay FPS/frametime",
+    "summary": "L'overlay de reference pour surveiller FPS, frametime et temperatures en jeu.",
+    "action": { "type": "download", "target": "https://www.msi.com/Landing/afterburner/graphics-cards", "label": "Telecharger MSI Afterburner" },
+    "sections": [
+      { "heading": "Details", "body": "MSI Afterburner (overclocking/monitoring GPU) et RivaTuner Statistics Server (RTSS, overlay en jeu) sont distribues ensemble par le meme installeur MSI, bien que developpes par des equipes differentes. RTSS affiche un overlay configurable (FPS, frametime, temperatures) directement en jeu, standard de facto utilise par la plupart des benchmarkeurs et repris par CapFrameX pour la capture." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger l'installeur sur la page officielle MSI Afterburner.",
+        "Pendant l'installation, verifier que l'option d'installation de RivaTuner Statistics Server est cochee.",
+        "Dans Afterburner, onglet \"Monitoring\", cocher les courbes a afficher en overlay (FPS, frametime, temperatures GPU/CPU).",
+        "Dans les parametres de RTSS, verifier/regler le raccourci clavier d'affichage de l'overlay en jeu."
+      ] }
+    ]
+  },
+  {
+    "id": "tool-capframex",
+    "category": "Monitoring / Benchmark",
+    "title": "CapFrameX - analyse fine des frametimes et des 1% low",
+    "summary": "Transforme les captures RTSS en graphiques de stabilite de frametime exploitables.",
+    "action": { "type": "download", "target": "https://github.com/CXWorld/CapFrameX/releases", "label": "Telecharger CapFrameX" },
+    "sections": [
+      { "heading": "Details", "body": "CapFrameX s'appuie sur les captures de RivaTuner Statistics Server pour produire des graphiques de stabilite de frametime, des percentiles (1% low, 0.1% low) et des comparaisons entre plusieurs sessions. Plus technique que HWiNFO ou Afterburner seuls, utile pour valider objectivement l'effet d'un tweak sur la stabilite des FPS plutot que sur la moyenne seule." },
+      { "heading": "Etapes", "steps": [
+        "Installer prealablement MSI Afterburner + RTSS (necessaire pour la capture).",
+        "Telecharger la derniere release CapFrameX depuis la page GitHub officielle du projet.",
+        "Lancer CapFrameX et verifier que RTSS est detecte automatiquement (indicateur dans l'interface).",
+        "Lancer une capture avec la touche configuree dans RTSS pendant une session de jeu, puis analyser le graphique de frametime dans CapFrameX apres la session."
+      ] }
+    ]
   }
 ]
