@@ -1658,7 +1658,7 @@ git commit -m "Ajouter la categorie Latence (timer, dynamic tick, TSC, HPET, MMC
 - Modify: `data/tweaks-catalog.json` (ajouter 3 entrées)
 - Modify: `engine/Engine.ps1` (nouvelle section handler, 1 paire de fonctions ; `alttab-filter-apps-only`/`snap-assist-flyout-enable` sont `kind: registry`, aucune fonction requise)
 
-- [ ] **Step 1 : Ajouter les 3 entrées catalogue**
+- [x] **Step 1 : Ajouter les 3 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -1711,7 +1711,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
 
 Ajouter une nouvelle section juste avant `# ============================================================` / `# Listes dynamiques : demarrage, debloat, preference GPU` (après la section Latence ajoutée en Task 11) :
 
@@ -1742,17 +1742,19 @@ function Set-HandlerState_TaskbarMultiMonitorShowAll {
 }
 ```
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter la categorie Productivite (Alt+Tab, Snap Assist, barre des taches multi-ecrans)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (modele haiku, commit `bc3e3b5`). Tache mecanique et triviale (1 seule paire de handlers, 2 entrees `kind: registry` pures) : revue directe du diff (`git show bc3e3b5`) effectuee par moi-meme au lieu de dispatcher 2 subagents reviewers, conforme au precedent des Tasks 6/8. Diff exact et conforme a la spec, aucune anomalie. Verifications syntaxiques toutes OK.
 
 ---
 
