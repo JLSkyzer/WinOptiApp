@@ -459,7 +459,7 @@ git commit -m "Ajouter 6 tweaks reseau (throttling, IPv6, delivery optimization,
 - Modify: `engine/Engine.ps1` (3 nouvelles actions `Invoke-*FullscreenOptApp*` + dispatch)
 - Modify: `renderer/app.js` (dispatch `renderSpecialWidget` + fonction `renderFullscreenOptList`)
 
-- [ ] **Step 1 : Ajouter les 3 entrées catalogue**
+- [x] **Step 1 : Ajouter les 3 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -508,7 +508,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter les actions moteur pour `fullscreen-opt-list` dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter les actions moteur pour `fullscreen-opt-list` dans `engine/Engine.ps1`**
 
 Ajouter juste après la fonction `Invoke-RemoveGpuPrefApp` (avant `# ============================================================` / `# Points de restauration`, autour de la ligne 554) :
 
@@ -558,7 +558,7 @@ function Invoke-RemoveFullscreenOptApp {
 }
 ```
 
-- [ ] **Step 3 : Câbler les 3 nouvelles actions dans le dispatch principal**
+- [x] **Step 3 : Câbler les 3 nouvelles actions dans le dispatch principal**
 
 Dans `engine/Engine.ps1`, dans le bloc `switch ($Action)` de la fonction de dispatch (autour de la ligne 641), ajouter ces 3 lignes juste après `'RemoveGpuPrefApp' { Invoke-RemoveGpuPrefApp -Payload $Script:Payload; $null }` :
 
@@ -568,7 +568,7 @@ Dans `engine/Engine.ps1`, dans le bloc `switch ($Action)` de la fonction de disp
         'RemoveFullscreenOptApp' { Invoke-RemoveFullscreenOptApp -Payload $Script:Payload; $null }
 ```
 
-- [ ] **Step 4 : Ajouter le rendu UI dans `renderer/app.js`**
+- [x] **Step 4 : Ajouter le rendu UI dans `renderer/app.js`**
 
 Remplacer la ligne (autour de la ligne 346) :
 
@@ -634,18 +634,20 @@ Puis ajouter la fonction `renderFullscreenOptList` juste après `renderGpuPrefLi
   }
 ```
 
-- [ ] **Step 5 : Vérifier**
+- [x] **Step 5 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 Run: `node --check renderer/app.js` → aucune sortie
 
-- [ ] **Step 6 : Commit**
+- [x] **Step 6 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1 renderer/app.js
 git commit -m "Ajouter tdr-delay-increase, gpu-preemption-disable et la liste fullscreen-opt-list"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `c3747df`). Spec-compliant (revue independante : 3 entrees catalogue, 3 fonctions `Invoke-*FullscreenOptApp*` + 2 variables script, 3 lignes de dispatch switch, et le rendu UI `renderFullscreenOptList` conformes caractere pour caractere ; seul ecart note : une virgule finale cosmetique corrigee au passage sur l'entree `cpu-boost-aggressive` preexistante, sans impact). Code-quality "approved with follow-ups" (aucun probleme bloquant) : la logique de manipulation des flags AppCompat (ajout/retrait de `DISABLEDXMAXIMIZEDWINDOWEDMODE` dans une valeur multi-flags) a ete verifiee robuste face a la coexistence avec d'autres flags (`RUNASADMIN`, `HIGHDPIAWARE`) deja presents sur le meme executable ; seule remarque mineure : `renderFullscreenOptList` est une duplication quasi exacte de `renderGpuPrefList`, candidate a factorisation future mais non bloquante et coherente avec le niveau de duplication deja tolere ailleurs dans le fichier.
 
 ---
 
