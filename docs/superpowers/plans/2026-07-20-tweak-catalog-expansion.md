@@ -870,7 +870,7 @@ git commit -m "Ajouter les services DiagTrack et dmwappushservice (categorie Ser
 - Modify: `data/tweaks-catalog.json` (ajouter 5 entrées)
 - Modify: `engine/Engine.ps1` (ajouter 2 fonctions dans une nouvelle section "Handlers nommes : Confidentialite (suite)")
 
-- [ ] **Step 1 : Ajouter les 5 entrées catalogue**
+- [x] **Step 1 : Ajouter les 5 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -955,7 +955,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter la fonction handler `StartMenuSuggestionsDisable`**
+- [x] **Step 2 : Ajouter la fonction handler `StartMenuSuggestionsDisable`**
 
 Ajouter à la fin de la section `# Handlers nommes : Confidentialite` existante, juste après `Set-HandlerState_ScheduledTasksTelemetry` (avant `# ============================================================` / `# Handlers nommes : Services (MMCSS)`, autour de la ligne 419) :
 
@@ -978,17 +978,19 @@ function Set-HandlerState_StartMenuSuggestionsDisable {
 
 (`werror-reporting-disable`, `advertising-id-disable`, `windows-recall-disable`, `cloud-clipboard-disable` sont tous `kind: registry` — aucune fonction moteur requise.)
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter 5 tweaks confidentialite dont windows-recall-disable (garde NPU)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `823732e`). Spec-compliance : ✅ conforme (revue subagent independante, diff verifie caractere pour caractere). Code-quality : "Changes requested" — 1 point Important releve : `Set-HandlerState_StartMenuSuggestionsDisable` ecrasait inconditionnellement 5 valeurs de registre sans capturer l'etat prealable (contrairement au pattern `Save-EngineState`/`Get-EngineState` deja etabli par `WidgetsCopilotBing` dans le meme fichier), risquant de reactiver des suggestions que l'utilisateur avait lui-meme desactivees. Corrige immediatement (commit `ac76d6e`) en appliquant le meme pattern de capture/restauration. Syntaxe verifiee OK apres correctif.
 
 ---
 
