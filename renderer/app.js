@@ -6,9 +6,13 @@
     jeux: { label: 'Jeux', desc: 'Mode Jeu, GameDVR/overlay et preference GPU par executable.' },
     demarrage: { label: 'Demarrage', desc: 'Applications au demarrage de Windows et desinstallation du bloatware.' },
     services: { label: 'Services', desc: 'Services Windows non essentiels et priorite MMCSS pour le jeu au premier plan.' },
-    confidentialite: { label: 'Confidentialite', desc: 'Widgets, Copilot, suggestions Bing et taches planifiees de telemetrie produit (jamais Windows Update / Defender).' }
+    confidentialite: { label: 'Confidentialite', desc: 'Widgets, Copilot, suggestions Bing et taches planifiees de telemetrie produit (jamais Windows Update / Defender).' },
+    audio: { label: 'Audio', desc: 'Latence audio et priorite MMCSS pour la capture/lecture son.' },
+    peripheriques: { label: 'Peripheriques', desc: 'Souris, clavier et USB : latence d\'entree et acceleration.' },
+    latence: { label: 'Latence', desc: 'Timers systeme, IRQ et synchronisation horloge pour la reactivite CPU.' },
+    productivite: { label: 'Productivite', desc: 'Alt+Tab, Snap Assist et barre des taches multi-ecrans.' }
   };
-  const CATEGORY_ORDER = ['alimentation', 'reseau', 'affichage', 'jeux', 'demarrage', 'services', 'confidentialite'];
+  const CATEGORY_ORDER = ['alimentation', 'reseau', 'affichage', 'jeux', 'demarrage', 'services', 'confidentialite', 'audio', 'peripheriques', 'latence', 'productivite'];
   const RISK_LABEL = { basique: 'Basique', intermediaire: 'Intermediaire', avance: 'Avance' };
 
   const state = {
