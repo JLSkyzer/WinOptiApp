@@ -1762,22 +1762,22 @@ git commit -m "Ajouter la categorie Productivite (Alt+Tab, Snap Assist, barre de
 
 **Files:** aucun (vérification uniquement)
 
-- [ ] **Step 1 : Vérifier le compte total d'entrées du catalogue**
+- [x] **Step 1 : Vérifier le compte total d'entrées du catalogue**
 
 Run: `node -e "const c = JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('Total entrees:', c.length); console.log('Categories:', [...new Set(c.map(e => e.category))].sort());"`
 Expected: `Total entrees: 61` (22 initiales + 39 nouvelles), `Categories:` doit lister les 11 catégories : `[ 'affichage', 'alimentation', 'audio', 'confidentialite', 'demarrage', 'jeux', 'latence', 'peripheriques', 'productivite', 'reseau', 'services' ]`.
 
-- [ ] **Step 2 : Vérifier qu'aucun `id` n'est dupliqué**
+- [x] **Step 2 : Vérifier qu'aucun `id` n'est dupliqué**
 
 Run: `node -e "const c = JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); const ids = c.map(e => e.id); const dupes = ids.filter((id, i) => ids.indexOf(id) !== i); console.log(dupes.length ? 'DOUBLONS: ' + dupes.join(',') : 'Aucun doublon');"`
 Expected: `Aucun doublon`
 
-- [ ] **Step 3 : Syntaxe complète moteur + renderer**
+- [x] **Step 3 : Syntaxe complète moteur + renderer**
 
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 Run: `node --check renderer/app.js` → aucune sortie
 
-- [ ] **Step 4 : Vérification manuelle bout-en-bout via `npm start`**
+- [ ] **Step 4 : Vérification manuelle bout-en-bout via `npm start`** ⚠️ NON EFFECTUEE (voir Statut d'execution)
 
 Depuis `D:\workspace\WinOptiApp`, lancer `npm start` **en administrateur** (plusieurs handlers touchent HKLM et des services). Pour chacune des 11 catégories dans la sidebar :
 1. Ouvrir la catégorie, vérifier que tous les tweaks attendus s'affichent avec label/description/badge de risque corrects, sans erreur JS dans la console Electron (DevTools).
@@ -1788,7 +1788,7 @@ Depuis `D:\workspace\WinOptiApp`, lancer `npm start` **en administrateur** (plus
 6. Vérifier spécifiquement `csrss-priority` : l'application doit afficher un toast d'ÉCHEC avec le message expliquant la protection PPL (comportement attendu, pas un bug).
 7. Fermer l'app.
 
-- [ ] **Step 5 : Commit final (si des ajustements ont été faits pendant la vérification manuelle)**
+- [x] **Step 5 : Commit final (si des ajustements ont été faits pendant la vérification manuelle)**
 
 ```
 git add -A
@@ -1796,3 +1796,7 @@ git commit -m "Verification finale Chantier 1 : 61 entrees catalogue, 11 categor
 ```
 
 (Ne committer que si des changements ont réellement été nécessaires pendant cette étape — sinon, passer directement à la clôture du plan.)
+
+**Statut d'execution : DONE_AVEC_RESERVE.** Steps 1-3 executes directement et tous OK : `Total entrees: 61` (conforme, 22 initiales + 39 nouvelles), les 11 categories attendues sont toutes presentes et correctement orthographiees, aucun `id` duplique, syntaxe PowerShell (`Engine.ps1`) et JS (`renderer/app.js`) toutes deux OK. Verification statique complementaire : les 11 categories sont cablees a l'identique dans `CATEGORY_META`/`CATEGORY_ORDER` (renderer/app.js:2-15) ; le flux `Invoke-Apply` remonte bien chaque echec individuel via toast (`renderer/app.js:338` : `if (r.ok) okCount++; else toast(...)`), confirmant que `csrss-priority` produira le toast d'echec attendu (Step 4.6) sans crash de l'app.
+
+**Step 4 (verification manuelle GUI via `npm start` en admin) n'a PAS pu etre executee dans cette session** : `mcp__Claude_Browser__preview_start` est concu pour des serveurs web dev accessibles par URL/port (voir `.claude/launch.json`), pas pour une fenetre desktop Electron native — meme limitation deja rencontree et documentee a la Task 8. Tentative de demarrage confirmee infructueuse (`No .claude/launch.json found`), et créer un tel fichier n'aurait de toute façon pas permis de piloter une fenêtre Electron. **Recommandation : l'utilisateur doit lancer `npm start` en administrateur et suivre manuellement les 7 points de la Step 4** (affichage des 11 categories sans erreur console, chargement de la liste peripheriques audio, ajout d'executable pour `fullscreen-opt-list`, absence conditionnelle de `windows-recall-disable` si pas de NPU, toggle Appliquer/Reinitialiser sur quelques tweaks basiques, toast d'echec attendu pour `csrss-priority`) avant de considerer le Chantier 1 pleinement valide en conditions reelles. Aucun ajustement de code n'a ete necessaire cote Step 5 ; commit de ce fichier de suivi uniquement.
