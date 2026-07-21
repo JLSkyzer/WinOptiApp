@@ -899,6 +899,31 @@ function Set-HandlerState_IrqPriorityTuning {
 }
 
 # ============================================================
+# Handlers nommes : Productivite
+# ============================================================
+
+function Get-HandlerState_TaskbarMultiMonitorShowAll {
+    $v = Get-RegValue -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'MMTaskbarEnabled'
+    if ("$v" -eq '1') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_TaskbarMultiMonitorShowAll {
+    param([bool]$Enabled)
+    $path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    if ($Enabled) {
+        Set-RegValue -Path $path -Name 'MMTaskbarEnabled' -Value 1 -Type DWord
+        Set-RegValue -Path $path -Name 'MMTaskbarMode' -Value 0 -Type DWord
+        Set-RegValue -Path $path -Name 'MMTaskbarGlomLevel' -Value 0 -Type DWord
+    } else {
+        Set-RegValue -Path $path -Name 'MMTaskbarEnabled' -Value 0 -Type DWord
+        Set-RegValue -Path $path -Name 'MMTaskbarMode' -Value 0 -Type DWord
+        Set-RegValue -Path $path -Name 'MMTaskbarGlomLevel' -Value 0 -Type DWord
+    }
+    Write-EngineLog "Barre des taches multi-ecrans -> Enabled=$Enabled" 'OK'
+}
+
+# ============================================================
 # Listes dynamiques : demarrage, debloat, preference GPU
 # ============================================================
 

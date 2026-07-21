@@ -753,5 +753,50 @@
     "requiresRestart": true,
     "label": "Priorité IRQ horloge/GPU",
     "description": "Priorise l'IRQ8 (horloge système) et l'IRQ du GPU détecté dynamiquement sur ta machine. Mécanisme hérité, effet non garanti — inopérant si le GPU utilise le MSI Mode (pas d'IRQ classique à prioriser)."
+  },
+  {
+    "id": "alttab-filter-apps-only",
+    "category": "productivite",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+    "name": "MultiTaskingAltTabFilter",
+    "regType": "DWord",
+    "onValue": 3,
+    "offValue": 0,
+    "defaultValue": 0,
+    "requiresRestart": false,
+    "requiresExplorerRestart": true,
+    "label": "Filtrer Alt+Tab sur les fenêtres d'application seules",
+    "description": "Alt+Tab n'affiche plus que les fenêtres d'application (0 = fenêtres + tous les onglets Edge par défaut). Le nom du réglage est trompeur : il ne filtre que les onglets Microsoft Edge, pas ceux des autres navigateurs. Nécessite une déconnexion/reconnexion ou un redémarrage de l'Explorateur pour prendre pleinement effet."
+  },
+  {
+    "id": "snap-assist-flyout-enable",
+    "category": "productivite",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+    "name": "EnableSnapAssistFlyout",
+    "regType": "DWord",
+    "onValue": 1,
+    "offValue": 0,
+    "defaultValue": 1,
+    "requiresRestart": false,
+    "label": "Activer le flyout Snap Assist",
+    "description": "Affiche la miniature de survol proposant de remplir l'autre moitié de l'écran quand tu accroches une fenêtre (Win+flèche)."
+  },
+  {
+    "id": "taskbar-multi-monitor-show-all",
+    "category": "productivite",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "TaskbarMultiMonitorShowAll",
+    "requiresRestart": false,
+    "requiresExplorerRestart": true,
+    "label": "Afficher la barre des tâches sur tous les écrans",
+    "description": "Active la barre des tâches sur chaque moniteur, avec les fenêtres ouvertes regroupées par écran plutôt que dupliquées partout."
   }
 ]
