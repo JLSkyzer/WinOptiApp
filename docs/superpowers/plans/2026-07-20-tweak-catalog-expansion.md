@@ -657,7 +657,7 @@ git commit -m "Ajouter tdr-delay-increase, gpu-preemption-disable et la liste fu
 - Modify: `data/tweaks-catalog.json` (ajouter 5 entrées)
 - Modify: `engine/Engine.ps1` (ajouter 4 fonctions ; `searchindexer-priority-reduce`/`tiworker-priority-reduce` sont `kind: registry`, aucune fonction requise)
 
-- [ ] **Step 1 : Ajouter les 5 entrées catalogue**
+- [x] **Step 1 : Ajouter les 5 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -735,7 +735,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter une nouvelle section de handlers dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter une nouvelle section de handlers dans `engine/Engine.ps1`**
 
 Ajouter une nouvelle section juste avant `# ============================================================` / `# Listes dynamiques : demarrage, debloat, preference GPU` (autour de la ligne 449) :
 
@@ -792,17 +792,19 @@ function Set-HandlerState_SvchostSplitDynamic {
 
 Remarque sur `SvchostSplitDynamic` : le seuil est plafonné à `[int32]::MaxValue` (≈ 2 To en KB) pour éviter un débordement lors de l'écriture DWORD — aucune machine grand public réelle n'atteint cette limite, ce plafond est une protection, pas une valeur magique arbitraire.
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter 5 tweaks demarrage (fast startup, timeouts, svchost split, IFEO priority)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `bc2db34`). Spec-compliant (revue independante : 5 entrees catalogue et 4 fonctions handler conformes caractere pour caractere). Code-quality "approved with follow-ups" a releve 2 points Importants : (1) `Set-HandlerState_ShutdownTimeoutsReduce` n'appelait pas `Backup-RegistryKey` avant ecriture, contrairement a `Set-HandlerState_SvchostSplitDynamic` juste en dessous dans le meme diff ; (2) `Get-HandlerState_SvchostSplitDynamic` recalculait le seuil de comparaison sur la RAM courante plutot que sur la RAM au moment de l'activation, risquant un affichage d'etat incoherent si la RAM physique changeait (VM a memoire dynamique notamment). Corriges immediatement (commit `d7c36cc`) : ajout de `Backup-RegistryKey` pour les deux cles HKLM/HKCU dans `ShutdownTimeoutsReduce`, et `Get-HandlerState_SvchostSplitDynamic` simplifie pour se baser sur la simple presence de la valeur de registre (coherent avec le fait que le seuil pose par ce tweak est toujours superieur a la RAM par construction). Verifie syntaxiquement OK apres correctif.
 
 ---
 
