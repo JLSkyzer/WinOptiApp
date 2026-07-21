@@ -587,6 +587,55 @@ function Set-HandlerState_MMCSSGamesPriority {
 }
 
 # ============================================================
+# Handlers nommes : Demarrage
+# ============================================================
+
+function Get-HandlerState_ShutdownTimeoutsReduce {
+    $v = Get-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'HungAppTimeout'
+    if ("$v" -eq '1000') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_ShutdownTimeoutsReduce {
+    param([bool]$Enabled)
+    if ($Enabled) {
+        Set-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'WaitToKillServiceTimeout' -Value '2000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'HungAppTimeout' -Value '1000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'WaitToKillAppTimeout' -Value '2000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'AutoEndTasks' -Value '1' -Type String
+    } else {
+        Set-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'WaitToKillServiceTimeout' -Value '5000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'HungAppTimeout' -Value '5000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'WaitToKillAppTimeout' -Value '5000' -Type String
+        Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'AutoEndTasks' -Value '0' -Type String
+    }
+    Write-EngineLog "Delais d'arret -> Enabled=$Enabled" 'OK'
+}
+
+function Get-HandlerState_SvchostSplitDynamic {
+    $v = Get-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'SvcHostSplitThresholdInKB'
+    if ($null -eq $v) { return 'off' }
+    $ramKb = [int64]((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1KB)
+    if ([int64]$v -gt $ramKb) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_SvchostSplitDynamic {
+    param([bool]$Enabled)
+    if ($Enabled) {
+        $ramKb = [int64]((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1KB)
+        $threshold = [int64]($ramKb * 2)
+        if ($threshold -gt [int32]::MaxValue) { $threshold = [int32]::MaxValue }
+        Backup-RegistryKey -KeyPath 'HKLM:\SYSTEM\CurrentControlSet\Control' -BackupName 'svchost-split-dynamic' | Out-Null
+        Set-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'SvcHostSplitThresholdInKB' -Value ([int32]$threshold) -Type DWord
+        Write-EngineLog "SvcHostSplitThresholdInKB -> $threshold (RAM detectee: $ramKb KB, fusion forcee)" 'OK'
+    } else {
+        Remove-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'SvcHostSplitThresholdInKB'
+        Write-EngineLog 'SvcHostSplitThresholdInKB retire (comportement Windows par defaut)' 'OK'
+    }
+}
+
+# ============================================================
 # Listes dynamiques : demarrage, debloat, preference GPU
 # ============================================================
 
