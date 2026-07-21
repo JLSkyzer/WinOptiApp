@@ -273,7 +273,7 @@ git commit -m "Ajouter la categorie Gestion des process au guide (Process Lasso 
 **Files:**
 - None (lecture/verification seulement)
 
-- [ ] **Step 1 : Verifier le compte total d'entrees et l'absence d'id duplique**
+- [x] **Step 1 : Verifier le compte total d'entrees et l'absence d'id duplique**
 
 Run:
 ```bash
@@ -288,7 +288,9 @@ console.log('Doublons id:', dupes.length ? dupes : 'aucun');
 ```
 Expected: `Total entrees: 35`, `Categories: 11`, `Doublons id: aucun`
 
-- [ ] **Step 2 : Verification manuelle dans l'application**
+**Resultat obtenu :** `Total entrees: 35`, `Categories: 11`, `Doublons id: aucun` — conforme.
+
+- [x] **Step 2 : Verification manuelle dans l'application**
 
 Lancer `npm start` en tant qu'administrateur (necessaire pour le moteur, meme si cette page ne l'utilise pas directement), aller sur la page "Guide manuel", et verifier visuellement :
 - Les 3 nouvelles categories ("Monitoring / Benchmark", "Latence / Input", "Gestion des process") apparaissent en bas de la liste des categories.
@@ -298,7 +300,9 @@ Lancer `npm start` en tant qu'administrateur (necessaire pour le moteur, meme si
 
 Si cette verification ne peut pas etre pilotee via un outil de preview navigateur (limitation deja rencontree au Chantier 1 : les outils `mcp__Claude_Browser__*` ne peuvent pas piloter une fenetre Electron native), documenter cette limitation honnetement dans le statut d'execution plutot que de simuler un succes, et recommander a l'utilisateur de faire cette verification lui-meme.
 
-- [ ] **Step 3 : Commit final si des ajustements ont ete faits pendant la verification**
+**Resultat obtenu :** limitation confirmee — `preview_start` a echoue car ce n'est pas un serveur HTTP mais une app Electron native (fenetre desktop), non pilotable par les outils de preview navigateur. Verification statique effectuee a la place : lecture complete de `renderGuideEntryList`/`renderGuideDetail` (`renderer/app.js`) confirmant que les 3 nouvelles categories seront listees dynamiquement (derivation par ordre d'apparition, deja verifie a la conception), que chaque combinaison de champs presente dans les 7 nouvelles entrees (avec/sans `action`, avec `sourceUrl`, avec `relatedTweakId`, section `body` vs `steps`) est geree sans erreur par le code de rendu (confirme lors des revues de qualite de code de Tasks 1-3). **Verification visuelle manuelle recommandee a l'utilisateur** via `npm start` (en administrateur) pour confirmation finale.
+
+- [x] **Step 3 : Commit final si des ajustements ont ete faits pendant la verification**
 
 ```bash
 git add -A
@@ -306,3 +310,7 @@ git commit -m "Chantier 2 : verification finale du guide outils tiers"
 ```
 
 (Si aucun ajustement n'a ete necessaire, ce commit n'est pas requis.)
+
+**Resultat obtenu :** aucun ajustement necessaire au-dela des corrections deja committees dans la Task 3 (`75f672b`) — aucun commit supplementaire requis pour ce step.
+
+**Statut d'execution (Task 4) :** DONE (verification statique). Compte final conforme (35 entrees / 11 categories / 0 doublon). Verification visuelle manuelle dans l'app non realisable via les outils disponibles (limitation Electron deja documentee au Chantier 1) — a faire par l'utilisateur.
