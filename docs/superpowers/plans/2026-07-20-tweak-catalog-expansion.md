@@ -1000,7 +1000,7 @@ git commit -m "Ajouter 5 tweaks confidentialite dont windows-recall-disable (gar
 - Modify: `renderer/app.js:2-11` (`CATEGORY_META`)
 - Modify: `renderer/app.js:11` (`CATEGORY_ORDER`)
 
-- [ ] **Step 1 : Étendre `CATEGORY_META`**
+- [x] **Step 1 : Étendre `CATEGORY_META`**
 
 Remplacer :
 
@@ -1036,20 +1036,22 @@ par :
   const CATEGORY_ORDER = ['alimentation', 'reseau', 'affichage', 'jeux', 'demarrage', 'services', 'confidentialite', 'audio', 'peripheriques', 'latence', 'productivite'];
 ```
 
-- [ ] **Step 2 : Vérifier**
+- [x] **Step 2 : Vérifier**
 
 Run: `node --check renderer/app.js` → aucune sortie
 
-- [ ] **Step 3 : Vérification manuelle immédiate**
+- [x] **Step 3 : Vérification manuelle immédiate**
 
 Run: `npm start` (depuis `D:\workspace\WinOptiApp`), vérifier que les 4 nouvelles catégories apparaissent dans la sidebar avec un badge "0/0" (aucun tweak encore ajouté) et qu'elles s'ouvrent sans erreur (page vide, pas de crash). Fermer l'app ensuite.
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add renderer/app.js
 git commit -m "Enregistrer les 4 nouvelles categories (audio, peripheriques, latence, productivite)"
 ```
+
+**Statut d'execution : DONE (avec limitation notee).** Implemente par subagent (commit `26b9a6e`), diff verifie caractere pour caractere contre la spec. `node --check` OK. La verification GUI reelle via `npm start` n'a pas pu etre executee dans cet environnement : l'outil de previsualisation navigateur disponible ne sait piloter que des serveurs web (URL/port), pas une fenetre native Electron. A la place, inspection statique du code de rendu (`categoryCounts` ligne 55, `renderCategoryPage` ligne 222) : les deux fonctions iterent sur des tableaux (`forEach`/`some`/`.length`) sans hypothese de non-vacuite, donc une categorie a 0 entree ne provoque ni exception ni division par zero — badge "0/0" et page vide attendus sans crash. Verification visuelle reelle recommandee par l'utilisateur lors d'un prochain lancement manuel de l'app.
 
 ---
 
