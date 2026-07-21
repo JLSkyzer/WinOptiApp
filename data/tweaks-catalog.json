@@ -595,4 +595,86 @@
     "label": "Désactiver les améliorations audio par périphérique",
     "description": "Coupe la virtualisation/égalisation logicielle de Windows (par périphérique de sortie), qui ajoute de la latence. Laisse le logiciel du périphérique (casque, DAC) gérer les effets si besoin."
   }
+  ,
+  {
+    "id": "mouse-acceleration-disable",
+    "category": "peripheriques",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "MouseAccelerationDisable",
+    "requiresRestart": false,
+    "label": "Désactiver l'accélération de la souris",
+    "description": "Force un mouvement de souris 1:1 (MouseSpeed/MouseThreshold à 0), sans courbe d'accélération dépendante de la vitesse de déplacement. Recommandé en jeu compétitif."
+  },
+  {
+    "id": "mouse-data-queue-size",
+    "category": "peripheriques",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters",
+    "name": "MouseDataQueueSize",
+    "regType": "DWord",
+    "onValue": 20,
+    "offValue": 100,
+    "defaultValue": 100,
+    "requiresRestart": true,
+    "label": "Réduire le buffer d'entrée souris",
+    "description": "Réduit la taille de la file d'attente des évènements souris (100 vers 20). Effet non garanti selon les configurations (perçu comme un placebo par certains, réel par d'autres) — teste et compare avant/après."
+  },
+  {
+    "id": "keyboard-data-queue-size",
+    "category": "peripheriques",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters",
+    "name": "KeyboardDataQueueSize",
+    "regType": "DWord",
+    "onValue": 20,
+    "offValue": 100,
+    "defaultValue": 100,
+    "requiresRestart": true,
+    "label": "Réduire le buffer d'entrée clavier",
+    "description": "Réduit la taille de la file d'attente des évènements clavier (100 vers 20). Effet non garanti selon les configurations — teste et compare avant/après."
+  },
+  {
+    "id": "keyboard-repeat-accelerate",
+    "category": "peripheriques",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKCU:\\Control Panel\\Keyboard",
+    "name": "KeyboardDelay",
+    "regType": "String",
+    "onValue": "0",
+    "offValue": "1",
+    "defaultValue": "1",
+    "requiresRestart": false,
+    "label": "Répétition clavier accélérée",
+    "description": "Réduit au minimum (0) le délai avant qu'une touche maintenue commence à se répéter."
+  },
+  {
+    "id": "usb-thread-priority",
+    "category": "peripheriques",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "UsbThreadPriority",
+    "requiresRestart": true,
+    "label": "Priorité des threads USB",
+    "description": "Augmente la priorité des threads de traitement des contrôleurs USB 3 (XHCI). Effet non garanti selon les configurations — mécanisme peu documenté, teste et compare avant/après."
+  },
+  {
+    "id": "csrss-priority",
+    "category": "peripheriques",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "CsrssPriority",
+    "requiresRestart": false,
+    "label": "Priorité haute de csrss.exe",
+    "description": "Tente d'élever la priorité du processus système csrss.exe. Mécanisme hérité d'avant les protections modernes (Protected Process Light) : sur Windows 11, Windows refuse généralement ce changement et l'application le signale honnêtement au lieu d'afficher un faux succès."
+  }
 ]

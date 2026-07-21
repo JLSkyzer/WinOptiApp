@@ -722,6 +722,81 @@ function Invoke-SetAudioDeviceEffects {
 }
 
 # ============================================================
+# Handlers nommes : Peripheriques
+# ============================================================
+
+function Get-HandlerState_MouseAccelerationDisable {
+    $v = Get-RegValue -Path 'HKCU:\Control Panel\Mouse' -Name 'MouseSpeed'
+    if ("$v" -eq '0') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_MouseAccelerationDisable {
+    param([bool]$Enabled)
+    $path = 'HKCU:\Control Panel\Mouse'
+    if ($Enabled) {
+        Set-RegValue -Path $path -Name 'MouseSpeed' -Value '0' -Type String
+        Set-RegValue -Path $path -Name 'MouseThreshold1' -Value '0' -Type String
+        Set-RegValue -Path $path -Name 'MouseThreshold2' -Value '0' -Type String
+    } else {
+        Set-RegValue -Path $path -Name 'MouseSpeed' -Value '1' -Type String
+        Set-RegValue -Path $path -Name 'MouseThreshold1' -Value '6' -Type String
+        Set-RegValue -Path $path -Name 'MouseThreshold2' -Value '10' -Type String
+    }
+    Write-EngineLog "Acceleration souris -> Enabled(desactivee)=$Enabled" 'OK'
+}
+
+function Get-HandlerState_UsbThreadPriority {
+    $v = Get-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\USBXHCI\Parameters' -Name 'ThreadPriority'
+    if ("$v" -eq '31') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_UsbThreadPriority {
+    param([bool]$Enabled)
+    $paths = @(
+        'HKLM:\SYSTEM\CurrentControlSet\Services\USBXHCI\Parameters',
+        'HKLM:\SYSTEM\CurrentControlSet\Services\USBHUB3\Parameters'
+    )
+    $value = if ($Enabled) { 31 } else { 8 }
+    foreach ($p in $paths) {
+        Set-RegValue -Path $p -Name 'ThreadPriority' -Value $value -Type DWord
+    }
+    Write-EngineLog "Priorite des threads USB -> Enabled=$Enabled" 'OK'
+}
+
+function Get-HandlerState_CsrssPriority {
+    $procs = Get-Process -Name 'csrss' -ErrorAction SilentlyContinue
+    if (-not $procs) { return 'unknown' }
+    $allHigh = $true
+    foreach ($p in $procs) {
+        try { if ($p.PriorityClass -ne [System.Diagnostics.ProcessPriorityClass]::High) { $allHigh = $false } }
+        catch { $allHigh = $false }
+    }
+    if ($allHigh) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_CsrssPriority {
+    param([bool]$Enabled)
+    $procs = Get-Process -Name 'csrss' -ErrorAction SilentlyContinue
+    if (-not $procs) { throw 'Processus csrss.exe introuvable.' }
+    $target = if ($Enabled) { [System.Diagnostics.ProcessPriorityClass]::High } else { [System.Diagnostics.ProcessPriorityClass]::Normal }
+    $failures = 0
+    foreach ($p in $procs) {
+        try { $p.PriorityClass = $target } catch { $failures++ }
+    }
+    Start-Sleep -Milliseconds 200
+    $verified = Get-HandlerState_CsrssPriority
+    $expected = if ($Enabled) { 'on' } else { 'off' }
+    if ($verified -ne $expected -or $failures -gt 0) {
+        Write-EngineLog "Priorite csrss.exe: application demandee mais non confirmee (protection PPL probable, $failures echec(s))" 'WARN'
+        throw 'La modification de priorite de csrss.exe a ete refusee par Windows (Protected Process Light). Ce mecanisme herite ne fonctionne plus de facon fiable sur les versions modernes.'
+    }
+    Write-EngineLog "Priorite csrss.exe -> Enabled=$Enabled (verifiee)" 'OK'
+}
+
+# ============================================================
 # Listes dynamiques : demarrage, debloat, preference GPU
 # ============================================================
 
