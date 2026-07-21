@@ -467,4 +467,33 @@
     "label": "Priorité CPU réduite pour TiWorker.exe",
     "description": "Force la priorité CPU du worker Windows Update (TiWorker.exe, souvent responsable de pics CPU en arrière-plan) à \"Faible\", sans bloquer les mises à jour elles-mêmes."
   }
+  ,
+  {
+    "id": "service-diagtrack",
+    "category": "services",
+    "risk": "intermediaire",
+    "type": "toggle",
+    "kind": "service",
+    "serviceName": "DiagTrack",
+    "onValue": "Disabled",
+    "offValue": "Automatic",
+    "defaultValue": "Automatic",
+    "requiresRestart": false,
+    "label": "Service de télémétrie \"Connected User Experiences and Telemetry\"",
+    "description": "Coupe le service central de collecte de télémétrie Windows (DiagTrack). N'a aucun effet sur Windows Update ou Defender."
+  },
+  {
+    "id": "service-dmwappush",
+    "category": "services",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "service",
+    "serviceName": "dmwappushservice",
+    "onValue": "Disabled",
+    "offValue": "Manual",
+    "defaultValue": "Manual",
+    "requiresRestart": false,
+    "label": "Service WAP Push Message Routing",
+    "description": "Service hérité du routage de messages WAP Push, quasi jamais utilisé sur un PC de bureau moderne."
+  }
 ]
