@@ -598,6 +598,8 @@ function Get-HandlerState_ShutdownTimeoutsReduce {
 
 function Set-HandlerState_ShutdownTimeoutsReduce {
     param([bool]$Enabled)
+    Backup-RegistryKey -KeyPath 'HKLM:\SYSTEM\CurrentControlSet\Control' -BackupName 'shutdown-timeouts-reduce-hklm' | Out-Null
+    Backup-RegistryKey -KeyPath 'HKCU:\Control Panel\Desktop' -BackupName 'shutdown-timeouts-reduce-hkcu' | Out-Null
     if ($Enabled) {
         Set-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'WaitToKillServiceTimeout' -Value '2000' -Type String
         Set-RegValue -Path 'HKCU:\Control Panel\Desktop' -Name 'HungAppTimeout' -Value '1000' -Type String
@@ -615,9 +617,7 @@ function Set-HandlerState_ShutdownTimeoutsReduce {
 function Get-HandlerState_SvchostSplitDynamic {
     $v = Get-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'SvcHostSplitThresholdInKB'
     if ($null -eq $v) { return 'off' }
-    $ramKb = [int64]((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1KB)
-    if ([int64]$v -gt $ramKb) { return 'on' }
-    return 'off'
+    return 'on'
 }
 
 function Set-HandlerState_SvchostSplitDynamic {
