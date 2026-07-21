@@ -692,6 +692,50 @@ function Invoke-RemoveGpuPrefApp {
     Write-EngineLog "Preference GPU haute perf retiree: $($Payload.path)" 'OK'
 }
 
+$Script:AppCompatLayersPath = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers'
+$Script:FullscreenOptFlag = 'DISABLEDXMAXIMIZEDWINDOWEDMODE'
+
+function Invoke-ListFullscreenOptApps {
+    $result = @()
+    if (Test-Path $Script:AppCompatLayersPath) {
+        $props = Get-ItemProperty -Path $Script:AppCompatLayersPath -ErrorAction SilentlyContinue
+        if ($props) {
+            foreach ($prop in $props.PSObject.Properties) {
+                if ($prop.Name -like 'PS*') { continue }
+                if ("$($prop.Value)" -match [regex]::Escape($Script:FullscreenOptFlag)) {
+                    $result += [PSCustomObject]@{ path = $prop.Name }
+                }
+            }
+        }
+    }
+    return ,$result
+}
+
+function Invoke-AddFullscreenOptApp {
+    param($Payload)
+    if (-not (Test-Path $Script:AppCompatLayersPath)) { New-Item -Path $Script:AppCompatLayersPath -Force | Out-Null }
+    $existing = Get-RegValue -Path $Script:AppCompatLayersPath -Name $Payload.path
+    $flags = if ($existing) { "$existing" } else { '~' }
+    if ($flags -notmatch [regex]::Escape($Script:FullscreenOptFlag)) {
+        $flags = "$flags $($Script:FullscreenOptFlag)".Trim()
+    }
+    Set-RegValue -Path $Script:AppCompatLayersPath -Name $Payload.path -Value $flags -Type String
+    Write-EngineLog "Optimisations plein ecran desactivees: $($Payload.path)" 'OK'
+}
+
+function Invoke-RemoveFullscreenOptApp {
+    param($Payload)
+    $existing = Get-RegValue -Path $Script:AppCompatLayersPath -Name $Payload.path
+    if (-not $existing) { return }
+    $remaining = (($existing -split '\s+') | Where-Object { $_ -and $_ -ne $Script:FullscreenOptFlag -and $_ -ne '~' }) -join ' '
+    if ($remaining) {
+        Set-RegValue -Path $Script:AppCompatLayersPath -Name $Payload.path -Value "~ $remaining" -Type String
+    } else {
+        Remove-RegValue -Path $Script:AppCompatLayersPath -Name $Payload.path
+    }
+    Write-EngineLog "Optimisations plein ecran reactivees: $($Payload.path)" 'OK'
+}
+
 # ============================================================
 # Points de restauration
 # ============================================================
@@ -792,6 +836,9 @@ try {
         'ListGpuPrefApps' { Invoke-ListGpuPrefApps }
         'AddGpuPrefApp' { Invoke-AddGpuPrefApp -Payload $Script:Payload; $null }
         'RemoveGpuPrefApp' { Invoke-RemoveGpuPrefApp -Payload $Script:Payload; $null }
+        'ListFullscreenOptApps' { Invoke-ListFullscreenOptApps }
+        'AddFullscreenOptApp' { Invoke-AddFullscreenOptApp -Payload $Script:Payload; $null }
+        'RemoveFullscreenOptApp' { Invoke-RemoveFullscreenOptApp -Payload $Script:Payload; $null }
         'CreateRestorePoint' { Invoke-CreateRestorePoint -Payload $Script:Payload; $null }
         'ListRestorePoints' { Invoke-ListRestorePoints }
         'GetEnvironmentInfo' { [PSCustomObject]@{ isAdmin = (Test-IsElevated) } }

@@ -354,6 +354,7 @@
     if (entry.type === 'startup-list') return renderStartupList(entry);
     if (entry.type === 'bloat-list') return renderBloatList(entry);
     if (entry.type === 'exe-list') return renderGpuPrefList(entry);
+    if (entry.type === 'fullscreen-opt-list') return renderFullscreenOptList(entry);
   }
 
   function sectionTitle(text) {
@@ -481,6 +482,53 @@
         btn.textContent = 'Retirer';
         btn.addEventListener('click', async () => {
           const r = await window.api.callEngine('RemoveGpuPrefApp', { path: item.path });
+          if (!r.ok) { toast('Echec: ' + r.error, false); return; }
+          await load();
+        });
+        row.appendChild(btn);
+        listHolder.appendChild(row);
+      });
+    }
+    await load();
+  }
+
+  async function renderFullscreenOptList(entry) {
+    sectionTitle(entry.label);
+    const wrapper = document.createElement('div');
+    contentEl.appendChild(wrapper);
+    const listHolder = document.createElement('div');
+    wrapper.appendChild(listHolder);
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn';
+    addBtn.textContent = 'Ajouter un executable...';
+    addBtn.addEventListener('click', async () => {
+      const picked = await window.api.pickExecutable();
+      if (!picked.ok) return;
+      const r = await window.api.callEngine('AddFullscreenOptApp', { path: picked.path });
+      if (!r.ok) { toast('Echec: ' + r.error, false); return; }
+      await load();
+    });
+    wrapper.appendChild(addBtn);
+
+    async function load() {
+      listHolder.innerHTML = '<div class="spinner-note">Chargement...</div>';
+      const res = await window.api.callEngine('ListFullscreenOptApps');
+      listHolder.innerHTML = '';
+      if (!res.ok) { listHolder.innerHTML = `<div class="empty-state">${res.error}</div>`; return; }
+      if (!res.data || !res.data.length) { listHolder.innerHTML = '<div class="empty-state">Aucun executable configure.</div>'; return; }
+      res.data.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'list-row';
+        const main = document.createElement('div');
+        main.className = 'list-row-main';
+        main.innerHTML = `<div class="list-row-sub" title="${item.path}">${item.path}</div>`;
+        row.appendChild(main);
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-ghost';
+        btn.textContent = 'Retirer';
+        btn.addEventListener('click', async () => {
+          const r = await window.api.callEngine('RemoveFullscreenOptApp', { path: item.path });
           if (!r.ok) { toast('Echec: ' + r.error, false); return; }
           await load();
         });
