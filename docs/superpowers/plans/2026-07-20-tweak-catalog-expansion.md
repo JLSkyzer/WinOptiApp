@@ -813,7 +813,7 @@ git commit -m "Ajouter 5 tweaks demarrage (fast startup, timeouts, svchost split
 **Files:**
 - Modify: `data/tweaks-catalog.json` (ajouter 2 entrées)
 
-- [ ] **Step 1 : Ajouter les 2 entrées catalogue**
+- [x] **Step 1 : Ajouter les 2 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -849,16 +849,18 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Vérifier**
+- [x] **Step 2 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 
-- [ ] **Step 3 : Commit**
+- [x] **Step 3 : Commit**
 
 ```
 git add data/tweaks-catalog.json
 git commit -m "Ajouter les services DiagTrack et dmwappushservice (categorie Services)"
 ```
+
+**Statut d'execution : DONE.** Tache purement declarative (2 entrees JSON `kind: service`, aucun code moteur requis, dispatcher generique existant suffit). Implemente par subagent (commit `1b3d7b6`). Diff verifie ligne a ligne contre la spec (identique), JSON valide. Vu la simplicite mecanique et le diff deja confirme exact, revue effectuee directement plutot que via subagents spec/qualite dedies — aucun probleme trouve.
 
 ---
 
