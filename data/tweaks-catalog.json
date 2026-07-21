@@ -267,4 +267,16 @@
     "label": "Priorité MMCSS pour le jeu au premier plan",
     "description": "SystemResponsiveness=10 + priorité GPU/CPU forcée pour la tâche multimédia \"Games\". Réduit les à-coups quand Windows fait autre chose en tâche de fond."
   }
+  ,
+  {
+    "id": "cpu-boost-aggressive",
+    "category": "alimentation",
+    "risk": "avance",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "CpuBoostAggressive",
+    "requiresRestart": false,
+    "label": "Mode Boost Processeur agressif",
+    "description": "Force le CPU à privilégier la fréquence maximale plus tôt (mode Aggressive du Processor Performance Boost). Augmente la consommation et la chaleur, surtout sur portable."
+  }
 ]

@@ -171,6 +171,24 @@ function Set-HandlerState_UsbSelectiveSuspend {
     Write-EngineLog "Veille selective USB -> Enabled=$Enabled" 'OK'
 }
 
+$Script:GuidSubProcessor = '54533251-82be-4824-96c1-47b60b740d00'
+$Script:GuidPerfBoostMode = 'be337238-0d82-4146-a960-4f3749d470c7'
+
+function Get-HandlerState_CpuBoostAggressive {
+    $out = & powercfg /q SCHEME_CURRENT $Script:GuidSubProcessor $Script:GuidPerfBoostMode 2>&1
+    if ($out -match "actuel du paramètre de courant alternatif\s*:\s*0x0*2\b" -or $out -match 'Current AC Power Setting Index:\s*0x0*2\b') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_CpuBoostAggressive {
+    param([bool]$Enabled)
+    $value = if ($Enabled) { 2 } else { 1 }
+    & powercfg /setacvalueindex SCHEME_CURRENT $Script:GuidSubProcessor $Script:GuidPerfBoostMode $value | Out-Null
+    & powercfg /setdcvalueindex SCHEME_CURRENT $Script:GuidSubProcessor $Script:GuidPerfBoostMode $value | Out-Null
+    & powercfg /setactive SCHEME_CURRENT | Out-Null
+    Write-EngineLog "Boost CPU agressif -> Enabled=$Enabled" 'OK'
+}
+
 # ============================================================
 # Handlers nommes : Reseau
 # ============================================================
