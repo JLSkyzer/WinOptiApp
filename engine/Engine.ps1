@@ -343,14 +343,15 @@ function Set-HandlerState_MsiModeNetwork {
 }
 
 function Get-HandlerState_DnsFast {
-    $adapters = Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -notmatch 'Loopback' }
+    $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue
     if (-not $adapters) { return 'unknown' }
     $allCloudflare = $true
     $any = $false
     foreach ($a in $adapters) {
-        if (-not $a.ServerAddresses -or $a.ServerAddresses.Count -eq 0) { continue }
+        $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+        if (-not $current -or -not $current.ServerAddresses -or $current.ServerAddresses.Count -eq 0) { continue }
         $any = $true
-        if (($a.ServerAddresses -join ',') -ne '1.1.1.1,1.0.0.1') { $allCloudflare = $false }
+        if (($current.ServerAddresses | Sort-Object) -join ',' -ne '1.0.0.1,1.1.1.1') { $allCloudflare = $false }
     }
     if (-not $any) { return 'unknown' }
     if ($allCloudflare) { return 'on' }
@@ -365,7 +366,11 @@ function Set-HandlerState_DnsFast {
         foreach ($a in $adapters) {
             $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
             $captured += [PSCustomObject]@{ IfIndex = $a.ifIndex; OriginalServers = @($current.ServerAddresses) }
-            Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue
+            try {
+                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue
+            } catch {
+                Write-EngineLog "DNS rapide: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
+            }
         }
         Save-EngineState 'dns-fast' $captured
         Write-EngineLog "DNS rapide (Cloudflare) applique sur $(@($adapters).Count) interface(s)" 'OK'
@@ -374,10 +379,14 @@ function Set-HandlerState_DnsFast {
         foreach ($a in $adapters) {
             $original = $null
             if ($state) { $original = ($state | Where-Object { $_.IfIndex -eq $a.ifIndex }).OriginalServers }
-            if ($original -and @($original).Count -gt 0) {
-                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $original -ErrorAction SilentlyContinue
-            } else {
-                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+            try {
+                if ($original -and @($original).Count -gt 0) {
+                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $original -ErrorAction SilentlyContinue
+                } else {
+                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+                }
+            } catch {
+                Write-EngineLog "DNS restauration: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
             }
         }
         Write-EngineLog 'DNS restaure (DHCP/original)' 'OK'
