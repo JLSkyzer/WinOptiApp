@@ -813,6 +813,7 @@ function Set-HandlerState_DynamicTickDisable {
     param([bool]$Enabled)
     if ($Enabled) {
         & bcdedit /set '{current}' disabledynamictick yes | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'bcdedit a refuse la modification de disabledynamictick (droits administrateur requis ?).' }
     } else {
         & bcdedit /deletevalue '{current}' disabledynamictick 2>&1 | Out-Null
     }
@@ -830,6 +831,7 @@ function Set-HandlerState_TscSyncPolicyEnhanced {
     param([bool]$Enabled)
     if ($Enabled) {
         & bcdedit /set '{current}' tscsyncpolicy Enhanced | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'bcdedit a refuse la modification de tscsyncpolicy (droits administrateur requis ?).' }
     } else {
         & bcdedit /deletevalue '{current}' tscsyncpolicy 2>&1 | Out-Null
     }
@@ -845,11 +847,7 @@ function Get-HandlerState_HpetDisable {
 
 function Set-HandlerState_HpetDisable {
     param([bool]$Enabled)
-    if ($Enabled) {
-        & bcdedit /deletevalue '{current}' useplatformclock 2>&1 | Out-Null
-    } else {
-        & bcdedit /set '{current}' useplatformclock true | Out-Null
-    }
+    & bcdedit /deletevalue '{current}' useplatformclock 2>&1 | Out-Null
     Save-EngineState 'hpet-disable' @{ applied = $Enabled }
     Write-EngineLog "HPET (useplatformclock) -> desactive=$Enabled (effectif au prochain redemarrage)" 'OK'
 }
