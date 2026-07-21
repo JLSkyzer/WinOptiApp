@@ -164,7 +164,7 @@ git commit -m "Ajouter le champ de schema guardRequiresDeviceClass (garde positi
 - Modify: `data/tweaks-catalog.json` (ajouter 1 entrée)
 - Modify: `engine/Engine.ps1` (ajouter 2 fonctions, section "Handlers nommes : Plans d'alimentation")
 
-- [ ] **Step 1 : Ajouter l'entrée catalogue**
+- [x] **Step 1 : Ajouter l'entrée catalogue**
 
 Insérer avant le `]` final de `data/tweaks-catalog.json` (après avoir ajouté une virgule à la fin de la dernière entrée existante, `mmcss-tuning`) :
 
@@ -183,7 +183,7 @@ Insérer avant le `]` final de `data/tweaks-catalog.json` (après avoir ajouté 
   }
 ```
 
-- [ ] **Step 2 : Ajouter les fonctions handler dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter les fonctions handler dans `engine/Engine.ps1`**
 
 Ajouter à la fin de la section `# Handlers nommes : Plans d'alimentation` (juste avant `# ============================================================` qui introduit `# Handlers nommes : Reseau`, autour de la ligne 173) :
 
@@ -209,17 +209,19 @@ function Set-HandlerState_CpuBoostAggressive {
 
 (Motif identique à `Get/Set-HandlerState_UsbSelectiveSuspend` déjà présent juste au-dessus — GUID `SUB_PROCESSOR`/`PERFBOOSTMODE` documentés par Microsoft, valeur `2` = Aggressive.)
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter le tweak cpu-boost-aggressive (categorie Alimentation)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `9179de8`). Spec-compliant (revue independante : entree catalogue et fonctions handler conformes caractere pour caractere). Code-quality "approved with follow-ups" (aucun probleme critique ; remarques mineures non bloquantes : la lecture d'etat ne verifie que la valeur AC, pas DC — defaut deja present dans `Get-HandlerState_UsbSelectiveSuspend` dont ce handler s'inspire ; style de virgule JSON legerement different du reste du fichier ; les 2 constantes GUID ne sont pas regroupees avec les autres constantes de la section — toutes conformes au plan tel qu'ecrit).
 
 ---
 
