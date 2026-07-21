@@ -1247,7 +1247,7 @@ git commit -m "Ajouter la categorie Audio (mmcss-audio-priority + audio-device-l
 - Modify: `data/tweaks-catalog.json` (ajouter 6 entrées)
 - Modify: `engine/Engine.ps1` (nouvelle section handler, 4 paires de fonctions ; `mouse-data-queue-size`/`keyboard-data-queue-size` sont `kind: registry`, aucune fonction requise)
 
-- [ ] **Step 1 : Ajouter les 6 entrées catalogue**
+- [x] **Step 1 : Ajouter les 6 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -1336,7 +1336,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter la section handler dans `engine/Engine.ps1`**
 
 Ajouter une nouvelle section juste avant `# ============================================================` / `# Listes dynamiques : demarrage, debloat, preference GPU` (après la section Audio ajoutée en Task 9) :
 
@@ -1419,17 +1419,19 @@ function Set-HandlerState_CsrssPriority {
 
 Remarque sur `CsrssPriority` : conformément au spec, le handler vérifie après coup (`Get-HandlerState_CsrssPriority`) que le changement a réellement pris effet et lève une exception explicite sinon — `Invoke-Apply` capture déjà cette exception et remonte `ok:false` + le message d'erreur au toast UI, aucun changement n'est nécessaire côté dispatch/UI pour ce comportement.
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter la categorie Peripheriques (6 tweaks : souris, clavier, USB, csrss)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `409a841`). Spec-compliance : ✅ conforme (revue independante, diff verifie champ par champ, ancrages d'insertion exacts, aucune fonction moteur superflue pour les 3 tweaks `kind: registry`). Code-quality : **Changes requested** puis corrige — un point Important releve : `Set-HandlerState_UsbThreadPriority` codait en dur la valeur "off" (`8`) au lieu de `Remove-RegValue`, contrairement au pattern etabli par `NetworkNagle`/`SvchostSplitDynamic` pour restaurer le comportement par defaut de Windows ; corrige immediatement (commit `5094d2a`, fix direct). Points Mineurs restants (aucune action requise, patterns herites) : absence de `Backup-RegistryKey` sur `MouseAccelerationDisable`/`UsbThreadPriority` (incoherence deja presente sur ~50% des handlers similaires du fichier, pas specifique a cette tache) ; `Get-HandlerState_*` de ces deux handlers ne verifient qu'un seul indicateur representatif plutot que toutes les clefs ecrites (meme pattern que `MmcssAudioPriority`). Le comportement `throw`-si-refuse de `CsrssPriority` s'integre correctement avec `Invoke-Apply` (deja verifie par le reviewer). Verifications syntaxiques toutes OK.
 
 ---
 
