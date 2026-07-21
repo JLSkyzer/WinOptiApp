@@ -314,5 +314,53 @@
         "Lancer une capture avec la touche configuree dans RTSS pendant une session de jeu, puis analyser le graphique de frametime dans CapFrameX apres la session."
       ] }
     ]
+  },
+  {
+    "id": "tool-latencymon",
+    "category": "Latence / Input",
+    "title": "LatencyMon - detection des latences DPC/ISR causees par les drivers",
+    "summary": "Identifie le driver responsable de micro-freezes ou stutters inexpliques.",
+    "action": { "type": "download", "target": "https://www.resplendence.com/latencymon", "label": "Telecharger LatencyMon" },
+    "sections": [
+      { "heading": "Details", "body": "LatencyMon mesure les temps d'execution des routines DPC (Deferred Procedure Call) et ISR (Interrupt Service Routine) de chaque driver charge. Un driver qui bloque le CPU trop longtemps dans ces routines (souvent un driver reseau, audio ou de chipset mal optimise) cause des micro-freezes ou stutters difficiles a diagnostiquer autrement." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger et installer LatencyMon depuis le site officiel Resplendence.",
+        "Lancer l'outil au repos (sans jeu) pendant quelques minutes pour etablir une base, puis relancer une mesure pendant une session de jeu.",
+        "Consulter l'onglet des drivers trie par temps d'execution DPC le plus eleve pour identifier le driver le plus problematique.",
+        "Mettre a jour le driver identifie (un correctif recent suffit generalement)."
+      ] }
+    ]
+  },
+  {
+    "id": "tool-nvidia-reflex-analyzer",
+    "category": "Latence / Input",
+    "title": "NVIDIA Reflex Analyzer - mesure de la latence systeme clic-a-pixel",
+    "summary": "Mesure la latence totale entre le clic souris et l'affichage a l'ecran, pas seulement le FPS.",
+    "sourceUrl": "https://www.nvidia.com/en-us/geforce/technologies/reflex/",
+    "sourceLabel": "Voir la page officielle NVIDIA Reflex",
+    "sections": [
+      { "heading": "Details", "body": "NVIDIA Reflex Analyzer mesure la latence systeme complete, du clic de souris jusqu'au changement de pixel affiche a l'ecran, contrairement au FPS ou au frametime qui ne mesurent que le rendu GPU. La mesure complete necessite un ecran certifie \"NVIDIA Reflex Analyzer\" et une souris compatible ; sans ce materiel, seule l'activation du mode Reflex (deja couverte par l'entree \"Mode a faible latence\" de ce guide) reste possible, avec un apercu partiel de la latence via l'overlay de performance de l'app NVIDIA." },
+      { "heading": "Etapes", "steps": [
+        "Verifier que le jeu supporte NVIDIA Reflex (option \"NVIDIA Reflex Low Latency\" dans les parametres graphiques du jeu).",
+        "Activer l'overlay de performance via l'app NVIDIA ou GeForce Experience (Alt+R par defaut) pour afficher les statistiques de latence en jeu.",
+        "Si un ecran et une souris compatibles Reflex Analyzer sont disponibles, activer la mesure complete clic-a-pixel dans l'overlay pour obtenir la latence systeme totale plutot qu'une estimation partielle."
+      ] }
+    ]
+  },
+  {
+    "id": "tool-markc-mouse-fix",
+    "category": "Latence / Input",
+    "title": "MarkC Windows Mouse Acceleration Fix - verification fine de l'acceleration souris",
+    "summary": "Verifie et corrige l'acceleration souris au-dela de ce que couvre le tweak automatise.",
+    "relatedTweakId": "mouse-acceleration-disable",
+    "action": { "type": "link", "target": "https://donewmouseaccel.blogspot.com/", "label": "Voir le guide MarkC" },
+    "sections": [
+      { "heading": "Details", "body": "Le tweak automatise \"Acceleration souris desactivee\" de l'app regle les 3 valeurs de registre standard (MouseSpeed, MouseThreshold1, MouseThreshold2). Le guide MarkC va plus loin en expliquant comment verifier qu'aucune acceleration residuelle ne subsiste (par exemple via un pilote de souris tiers qui reimpose sa propre courbe d'acceleration en dehors du registre Windows) et comment la neutraliser dans ce cas." },
+      { "heading": "Etapes", "steps": [
+        "Verifier d'abord que le tweak automatise \"Acceleration souris desactivee\" est active dans l'onglet Peripheriques de l'app.",
+        "Consulter le guide MarkC (lien officiel) pour la methode de verification manuelle des valeurs de registre.",
+        "Si un logiciel de souris tiers (Logitech G HUB, Razer Synapse, etc.) est installe, verifier dans ses parametres qu'aucune option d'acceleration ou de \"smoothing\" n'est activee en plus des reglages Windows."
+      ] }
+    ]
   }
 ]
