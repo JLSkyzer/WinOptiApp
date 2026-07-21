@@ -758,9 +758,12 @@ function Set-HandlerState_UsbThreadPriority {
         'HKLM:\SYSTEM\CurrentControlSet\Services\USBXHCI\Parameters',
         'HKLM:\SYSTEM\CurrentControlSet\Services\USBHUB3\Parameters'
     )
-    $value = if ($Enabled) { 31 } else { 8 }
     foreach ($p in $paths) {
-        Set-RegValue -Path $p -Name 'ThreadPriority' -Value $value -Type DWord
+        if ($Enabled) {
+            Set-RegValue -Path $p -Name 'ThreadPriority' -Value 31 -Type DWord
+        } else {
+            Remove-RegValue -Path $p -Name 'ThreadPriority'
+        }
     }
     Write-EngineLog "Priorite des threads USB -> Enabled=$Enabled" 'OK'
 }
