@@ -220,7 +220,7 @@ git commit -m "Ajouter la categorie Latence / Input au guide (LatencyMon, Reflex
 **Files:**
 - Modify: `data/guide-steps.json` (ajout apres l'entree `tool-markc-mouse-fix` de la Task 2, avant le `]` final)
 
-- [ ] **Step 1 : Ajouter l'entree JSON suivante**
+- [x] **Step 1 : Ajouter l'entree JSON suivante**
 
 Localiser la fin de l'entree `tool-markc-mouse-fix` ajoutee a la Task 2 (qui se termine par `  },` suivi de `]`). Remplacer :
 
@@ -252,17 +252,19 @@ par (noter l'absence de virgule apres le `}` de fermeture de `tool-process-lasso
 ]
 ```
 
-- [ ] **Step 2 : Verifier la validite JSON**
+- [x] **Step 2 : Verifier la validite JSON**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/guide-steps.json','utf8')); console.log('OK')"`
 Expected: `OK`
 
-- [ ] **Step 3 : Commit**
+- [x] **Step 3 : Commit**
 
 ```bash
 git add data/guide-steps.json
 git commit -m "Ajouter la categorie Gestion des process au guide (Process Lasso + avertissement conflits)"
 ```
+
+**Statut d'execution (Task 3) :** DONE. Implementeur (modele haiku) : commit `ba06ecb`. Reviewer spec-compliance : "Spec compliant" (entree exacte, 35 entrees totales, 11 categories, aucun doublon). Reviewer code-quality (1er passage) : "Changements demandes" — 2 problemes importants trouves et confirmes independamment (URL de telechargement `https://bitsum.com/download/` en 404 ; description de la section Attention presentant `CsrssPriority` comme un reglage actif alors qu'il est generalement refuse par Windows 11 selon sa propre description dans le catalogue). Correction appliquee via commit `75f672b` (URL remplacee par `https://bitsum.com/processlasso/`, verifiee fonctionnelle ; texte Attention nuance). Reviewer code-quality (2e passage) : "Approuve".
 
 ---
 
