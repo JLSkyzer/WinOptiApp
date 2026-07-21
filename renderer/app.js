@@ -49,7 +49,11 @@
   }
 
   function categoryCounts(cat) {
-    const entries = toggleEntriesForCategory(cat);
+    const entries = toggleEntriesForCategory(cat).filter((e) => {
+      if (!e.guardRequiresDeviceClass) return true;
+      const s = state.statesById[e.id];
+      return s ? s.guardOk : true;
+    });
     let on = 0;
     entries.forEach((e) => {
       const eff = effectiveState(e.id);
@@ -250,7 +254,13 @@
 
     contentEl.appendChild(actions);
 
-    toggleEntriesForCategory(cat).forEach((entry) => renderToggleCard(entry));
+    toggleEntriesForCategory(cat).forEach((entry) => {
+      if (entry.guardRequiresDeviceClass) {
+        const s = state.statesById[entry.id];
+        if (s && !s.guardOk) return;
+      }
+      renderToggleCard(entry);
+    });
 
     const specialEntries = entriesForCategory(cat).filter((e) => !e.kind);
     specialEntries.forEach((entry) => renderSpecialWidget(entry));

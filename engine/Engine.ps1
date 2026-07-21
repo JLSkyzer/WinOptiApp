@@ -591,6 +591,9 @@ function Invoke-GetAllStates {
         if ($entry.guardNoDeviceClass) {
             $guardOk = -not (Test-DeviceClassPresent -ClassName $entry.guardNoDeviceClass)
         }
+        if ($entry.guardRequiresDeviceClass) {
+            $guardOk = $guardOk -and (Test-DeviceClassPresent -ClassName $entry.guardRequiresDeviceClass)
+        }
         $result += [PSCustomObject]@{ id = $entry.id; state = $state; guardOk = $guardOk }
     }
     return ,$result
