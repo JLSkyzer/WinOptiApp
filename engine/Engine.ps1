@@ -271,6 +271,119 @@ function Set-HandlerState_NetworkEEE {
     }
 }
 
+function Get-HandlerState_NetworkIPv6Disable {
+    $bindings = Get-NetAdapterBinding -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue
+    if (-not $bindings) { return 'unknown' }
+    $anyEnabled = $bindings | Where-Object { $_.Enabled }
+    if ($anyEnabled) { return 'off' }
+    return 'on'
+}
+
+function Set-HandlerState_NetworkIPv6Disable {
+    param([bool]$Enabled)
+    $bindings = Get-NetAdapterBinding -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue
+    foreach ($b in $bindings) {
+        try {
+            if ($Enabled) { Disable-NetAdapterBinding -Name $b.Name -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue }
+            else { Enable-NetAdapterBinding -Name $b.Name -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue }
+        } catch {
+            Write-EngineLog "IPv6: echec sur $($b.Name): $($_.Exception.Message)" 'WARN'
+        }
+    }
+    Write-EngineLog "IPv6 desactive -> Enabled=$Enabled sur $(@($bindings).Count) interface(s)" 'OK'
+}
+
+function Get-HandlerState_NetworkPowerManagementDisable {
+    $adapters = Get-NetAdapterPowerManagement -ErrorAction SilentlyContinue
+    if (-not $adapters) { return 'unknown' }
+    $anyAllowed = $adapters | Where-Object { $_.AllowComputerToTurnOffDevice -eq 'Enabled' }
+    if ($anyAllowed) { return 'off' }
+    return 'on'
+}
+
+function Set-HandlerState_NetworkPowerManagementDisable {
+    param([bool]$Enabled)
+    $adapters = Get-NetAdapterPowerManagement -ErrorAction SilentlyContinue
+    $value = if ($Enabled) { 'Disabled' } else { 'Enabled' }
+    foreach ($a in $adapters) {
+        try { Set-NetAdapterPowerManagement -Name $a.Name -AllowComputerToTurnOffDevice $value -ErrorAction SilentlyContinue } catch {
+            Write-EngineLog "Gestion energie reseau: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
+        }
+    }
+    Write-EngineLog "Gestion d'energie carte reseau -> Enabled(desactivee)=$Enabled" 'OK'
+}
+
+function Get-MsiTargetNetworkDevices {
+    return @(Get-PnpDevice -Class Net -Status OK -ErrorAction SilentlyContinue)
+}
+
+function Get-HandlerState_MsiModeNetwork {
+    $devices = Get-MsiTargetNetworkDevices
+    if (@($devices).Count -eq 0) { return 'unknown' }
+    foreach ($d in $devices) {
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($d.InstanceId)\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"
+        $v = Get-RegValue -Path $path -Name 'MSISupported'
+        if ("$v" -ne '1') { return 'off' }
+    }
+    return 'on'
+}
+
+function Set-HandlerState_MsiModeNetwork {
+    param([bool]$Enabled)
+    $devices = Get-MsiTargetNetworkDevices
+    $value = if ($Enabled) { 1 } else { 0 }
+    foreach ($d in $devices) {
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($d.InstanceId)\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"
+        if (Test-Path $path) {
+            Backup-RegistryKey -KeyPath $path -BackupName "msi-net-$($d.InstanceId -replace '[\\\/]','_')" | Out-Null
+            Set-RegValue -Path $path -Name 'MSISupported' -Value $value -Type DWord
+        }
+    }
+    Write-EngineLog "MSI Mode reseau -> Enabled=$Enabled sur $(@($devices).Count) peripherique(s)" 'OK'
+}
+
+function Get-HandlerState_DnsFast {
+    $adapters = Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -notmatch 'Loopback' }
+    if (-not $adapters) { return 'unknown' }
+    $allCloudflare = $true
+    $any = $false
+    foreach ($a in $adapters) {
+        if (-not $a.ServerAddresses -or $a.ServerAddresses.Count -eq 0) { continue }
+        $any = $true
+        if (($a.ServerAddresses -join ',') -ne '1.1.1.1,1.0.0.1') { $allCloudflare = $false }
+    }
+    if (-not $any) { return 'unknown' }
+    if ($allCloudflare) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_DnsFast {
+    param([bool]$Enabled)
+    $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue
+    if ($Enabled) {
+        $captured = @()
+        foreach ($a in $adapters) {
+            $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+            $captured += [PSCustomObject]@{ IfIndex = $a.ifIndex; OriginalServers = @($current.ServerAddresses) }
+            Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue
+        }
+        Save-EngineState 'dns-fast' $captured
+        Write-EngineLog "DNS rapide (Cloudflare) applique sur $(@($adapters).Count) interface(s)" 'OK'
+    } else {
+        $state = Get-EngineState 'dns-fast'
+        foreach ($a in $adapters) {
+            $original = $null
+            if ($state) { $original = ($state | Where-Object { $_.IfIndex -eq $a.ifIndex }).OriginalServers }
+            if ($original -and @($original).Count -gt 0) {
+                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $original -ErrorAction SilentlyContinue
+            } else {
+                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+            }
+        }
+        Write-EngineLog 'DNS restaure (DHCP/original)' 'OK'
+    }
+}
+
 # ============================================================
 # Handlers nommes : Affichage
 # ============================================================

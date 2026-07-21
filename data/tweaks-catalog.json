@@ -279,4 +279,81 @@
     "label": "Mode Boost Processeur agressif",
     "description": "Force le CPU à privilégier la fréquence maximale plus tôt (mode Aggressive du Processor Performance Boost). Augmente la consommation et la chaleur, surtout sur portable."
   }
+  ,
+  {
+    "id": "network-throttling-unlimited",
+    "category": "reseau",
+    "risk": "intermediaire",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+    "name": "NetworkThrottlingIndex",
+    "regType": "DWord",
+    "onValue": -1,
+    "offValue": 10,
+    "defaultValue": 10,
+    "requiresRestart": false,
+    "label": "Suppression de la limitation réseau multimédia",
+    "description": "Supprime la limitation à environ 80% de bande passante que Windows applique au trafic réseau non-multimédia quand une application audio/vidéo tourne (NetworkThrottlingIndex). Utile en streaming/partage d'écran pendant le jeu."
+  },
+  {
+    "id": "network-ipv6-disable",
+    "category": "reseau",
+    "risk": "intermediaire",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "NetworkIPv6Disable",
+    "requiresRestart": false,
+    "label": "Désactiver IPv6",
+    "description": "Désactive le protocole IPv6 sur toutes les interfaces physiques. Peut casser des services qui dépendent explicitement d'IPv6."
+  },
+  {
+    "id": "delivery-optimization-http-only",
+    "category": "reseau",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+    "name": "DODownloadMode",
+    "regType": "DWord",
+    "onValue": 0,
+    "offValue": null,
+    "defaultValue": null,
+    "requiresRestart": false,
+    "label": "Delivery Optimization en HTTP seul",
+    "description": "Empêche Windows Update de partager/télécharger des mises à jour en pair-à-pair (LAN ou Internet). Tout le trafic de mise à jour passe uniquement par les serveurs Microsoft."
+  },
+  {
+    "id": "network-power-management-disable",
+    "category": "reseau",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "NetworkPowerManagementDisable",
+    "requiresRestart": false,
+    "label": "Désactiver la gestion d'énergie de la carte réseau",
+    "description": "Empêche Windows de mettre en veille la carte réseau pour économiser l'énergie (case \"Autoriser l'ordinateur à éteindre ce périphérique\" décochée sur toutes les interfaces)."
+  },
+  {
+    "id": "msi-mode-network",
+    "category": "reseau",
+    "risk": "intermediaire",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "MsiModeNetwork",
+    "requiresRestart": true,
+    "label": "MSI Mode (contrôleurs réseau)",
+    "description": "Extension du MSI Mode (interruptions matérielles en mode Message Signaled) aux contrôleurs réseau, même mécanisme que le MSI Mode GPU/USB existant mais ciblant la classe de périphérique Réseau."
+  },
+  {
+    "id": "dns-fast",
+    "category": "reseau",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "handler",
+    "handler": "DnsFast",
+    "requiresRestart": false,
+    "label": "Basculer vers un résolveur DNS rapide (Cloudflare)",
+    "description": "Configure 1.1.1.1 / 1.0.0.1 (Cloudflare) comme serveurs DNS sur toutes les interfaces physiques, à la place du DNS fourni par ton FAI/routeur. L'état DNS d'origine est sauvegardé pour un rollback exact."
+  }
 ]
