@@ -42,7 +42,7 @@ Garde positive symétrique de `guardNoDeviceClass` existant : le tweak n'est act
 - Modify: `renderer/app.js:51-59` (`categoryCounts`)
 - Modify: `renderer/app.js:214-257` (`renderCategoryPage`)
 
-- [ ] **Step 1 : Étendre `Invoke-GetAllStates` pour calculer la garde positive**
+- [x] **Step 1 : Étendre `Invoke-GetAllStates` pour calculer la garde positive**
 
 Dans `engine/Engine.ps1`, remplacer :
 
@@ -83,12 +83,12 @@ function Invoke-GetAllStates {
 }
 ```
 
-- [ ] **Step 2 : Vérifier la syntaxe PowerShell**
+- [x] **Step 2 : Vérifier la syntaxe PowerShell**
 
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"`
 Expected: `Syntaxe OK`
 
-- [ ] **Step 3 : Filtrer l'affichage dans `renderCategoryPage` (masquer si garde positive échoue)**
+- [x] **Step 3 : Filtrer l'affichage dans `renderCategoryPage` (masquer si garde positive échoue)**
 
 Dans `renderer/app.js`, remplacer la ligne :
 
@@ -108,7 +108,7 @@ par :
     });
 ```
 
-- [ ] **Step 4 : Exclure ces entrées masquées du compte de la sidebar/dashboard**
+- [x] **Step 4 : Exclure ces entrées masquées du compte de la sidebar/dashboard**
 
 Dans `renderer/app.js`, remplacer :
 
@@ -142,17 +142,19 @@ par :
   }
 ```
 
-- [ ] **Step 5 : Vérifier la syntaxe JS**
+- [x] **Step 5 : Vérifier la syntaxe JS**
 
 Run: `node --check renderer/app.js`
 Expected: aucune sortie, code de sortie 0.
 
-- [ ] **Step 6 : Commit**
+- [x] **Step 6 : Commit**
 
 ```
 git add engine/Engine.ps1 renderer/app.js
 git commit -m "Ajouter le champ de schema guardRequiresDeviceClass (garde positive)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `bc22242`). Spec-compliant (revue independante) et code-quality "approved with follow-ups" (2 remarques mineures non bloquantes : logique de filtre dupliquee sous 2 formes differentes entre `categoryCounts`/`renderCategoryPage`, et le bouton "Redemarrer l'Explorateur" n'est pas filtre par `guardOk` — sans impact car aucune entree Task 7 ne combine `guardRequiresDeviceClass` et `requiresExplorerRestart`).
 
 ---
 
