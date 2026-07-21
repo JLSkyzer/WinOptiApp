@@ -567,8 +567,18 @@ function Set-HandlerState_StartMenuSuggestionsDisable {
     param([bool]$Enabled)
     $path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
     $names = @('SystemPaneSuggestionsEnabled', 'SubscribedContent-338388Enabled', 'SubscribedContent-338389Enabled', 'RotatingLockScreenEnabled', 'RotatingLockScreenOverlayEnabled')
-    $value = if ($Enabled) { 0 } else { 1 }
-    foreach ($n in $names) { Set-RegValue -Path $path -Name $n -Value $value -Type DWord }
+    if ($Enabled) {
+        $captured = @{}
+        foreach ($n in $names) { $captured[$n] = Get-RegValue -Path $path -Name $n }
+        Save-EngineState 'start-menu-suggestions-disable' $captured
+        foreach ($n in $names) { Set-RegValue -Path $path -Name $n -Value 0 -Type DWord }
+    } else {
+        $prev = Get-EngineState 'start-menu-suggestions-disable'
+        foreach ($n in $names) {
+            $restore = if ($prev -and $null -ne $prev.$n) { $prev.$n } else { 1 }
+            Set-RegValue -Path $path -Name $n -Value $restore -Type DWord
+        }
+    }
     Write-EngineLog "Suggestions Start Menu/verrouillage -> Enabled(desactivees)=$Enabled" 'OK'
 }
 
