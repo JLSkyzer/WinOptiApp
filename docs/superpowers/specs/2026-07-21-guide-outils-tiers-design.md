@@ -44,7 +44,7 @@ Aucune modification de schema. Chaque entree reutilise exactement les champs exi
 Notes :
 - `action.type` vaut `"download"` pour ces 7 entrees (au lieu de `"ms-settings"` pour les entrees existantes). Ce champ n'a d'effet sur le rendu que pour la valeur `"none"` (`renderGuideDetail` dans `renderer/app.js:723`) — `"download"` est purement descriptif et ne necessite aucun changement de code.
 - `action.target` pointe vers l'URL officielle de telechargement de l'outil. `shell.openExternal` (utilise par `window.api.openExternalSettings`, voir `main.js:89`) ouvre indifferemment une URI `ms-settings:` ou une URL `https://`, donc aucun changement d'IPC/preload n'est necessaire.
-- Pas de `relatedTweakId` sur ces entrees : ce champ ne supporte qu'un seul lien vers un tweak automatise, alors que la fiche Process Lasso doit mentionner plusieurs tweaks existants (voir section suivante). La mention se fait en prose dans une section dediee, a l'image du pattern deja utilise dans l'entree `widgets-copilot-manual`.
+- `relatedTweakId` est utilise normalement quand une entree correspond a exactement un tweak automatise existant (ex: `tool-markc-mouse-fix` -> `mouse-acceleration-disable`). Il est en revanche omis sur l'entree Process Lasso, car ce champ ne supporte qu'un seul lien alors que cette fiche doit mentionner plusieurs tweaks existants (voir section suivante) ; cette mention se fait en prose dans une section dediee, a l'image du pattern deja utilise dans l'entree `widgets-copilot-manual`.
 
 ### Section "Attention" — Process Lasso
 
