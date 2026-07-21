@@ -231,7 +231,7 @@ git commit -m "Ajouter le tweak cpu-boost-aggressive (categorie Alimentation)"
 - Modify: `data/tweaks-catalog.json` (ajouter 6 entrées)
 - Modify: `engine/Engine.ps1` (ajouter 8 fonctions, section "Handlers nommes : Reseau")
 
-- [ ] **Step 1 : Ajouter les 6 entrées catalogue**
+- [x] **Step 1 : Ajouter les 6 entrées catalogue**
 
 Insérer avant le `]` final :
 
@@ -315,7 +315,7 @@ Insérer avant le `]` final :
   }
 ```
 
-- [ ] **Step 2 : Ajouter les fonctions handler dans `engine/Engine.ps1`**
+- [x] **Step 2 : Ajouter les fonctions handler dans `engine/Engine.ps1`**
 
 Ajouter à la fin de la section `# Handlers nommes : Reseau` (juste avant `# ============================================================` qui introduit `# Handlers nommes : Affichage`, autour de la ligne 254) :
 
@@ -436,17 +436,19 @@ function Set-HandlerState_DnsFast {
 
 Note : `network-throttling-unlimited` et `delivery-optimization-http-only` sont `kind: registry` — aucune fonction moteur nécessaire, le dispatcher générique `Get-ToggleState`/`Set-ToggleValue` les gère directement à partir de leur JSON.
 
-- [ ] **Step 3 : Vérifier**
+- [x] **Step 3 : Vérifier**
 
 Run: `node -e "JSON.parse(require('fs').readFileSync('data/tweaks-catalog.json','utf8')); console.log('JSON OK')"` → `JSON OK`
 Run: `powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'engine/Engine.ps1'), [ref]$null, [ref]$null); Write-Host 'Syntaxe OK'"` → `Syntaxe OK`
 
-- [ ] **Step 4 : Commit**
+- [x] **Step 4 : Commit**
 
 ```
 git add data/tweaks-catalog.json engine/Engine.ps1
 git commit -m "Ajouter 6 tweaks reseau (throttling, IPv6, delivery optimization, power mgmt, MSI, DNS)"
 ```
+
+**Statut d'execution : DONE.** Implemente par subagent (commit `1837adc`). Spec-compliant (revue independante : les 6 entrees catalogue et les 9 fonctions handler — 4 paires Get/Set + 1 helper `Get-MsiTargetNetworkDevices` — conformes caractere pour caractere ; note du plan corrigee de "8 fonctions" a "9 fonctions"). Code-quality "approved with follow-ups" a d'abord releve 2 points Importants dans `dns-fast` : (1) `Get-HandlerState_DnsFast` interrogeait toutes les interfaces IPv4 non-loopback (y compris VPN/Hyper-V/WSL) alors que `Set-HandlerState_DnsFast` ne modifiait que les interfaces physiques, causant un etat incoherent sur les machines avec adaptateurs virtuels ; (2) `Set-HandlerState_DnsFast` n'avait pas de `try/catch`+log WARN par interface contrairement aux handlers reseau voisins. Ces 2 points ont ete corriges immediatement (commit `9841d5e`) : `Get-HandlerState_DnsFast` s'aligne desormais sur `Get-NetAdapter -Physical` comme `Set-HandlerState_DnsFast`, la comparaison des serveurs DNS est desormais insensible a l'ordre (`Sort-Object`), et les echecs de `Set-DnsClientServerAddress` sont journalises en WARN dans les deux branches (activation/restauration). Verifie syntaxiquement OK apres correctif.
 
 ---
 
