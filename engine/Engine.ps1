@@ -557,6 +557,21 @@ function Set-HandlerState_ScheduledTasksTelemetry {
     Write-EngineLog "Taches telemetrie -> Desactivees=$Enabled" 'OK'
 }
 
+function Get-HandlerState_StartMenuSuggestionsDisable {
+    $v = Get-RegValue -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' -Name 'SystemPaneSuggestionsEnabled'
+    if ("$v" -eq '0') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_StartMenuSuggestionsDisable {
+    param([bool]$Enabled)
+    $path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
+    $names = @('SystemPaneSuggestionsEnabled', 'SubscribedContent-338388Enabled', 'SubscribedContent-338389Enabled', 'RotatingLockScreenEnabled', 'RotatingLockScreenOverlayEnabled')
+    $value = if ($Enabled) { 0 } else { 1 }
+    foreach ($n in $names) { Set-RegValue -Path $path -Name $n -Value $value -Type DWord }
+    Write-EngineLog "Suggestions Start Menu/verrouillage -> Enabled(desactivees)=$Enabled" 'OK'
+}
+
 # ============================================================
 # Handlers nommes : Services (MMCSS)
 # ============================================================
