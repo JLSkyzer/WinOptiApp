@@ -179,9 +179,27 @@ identifié, probablement protégé) : il n'a pas été audité.
 | AME Wizard + ReviOS | Ne pas utiliser | Aucune |
 | deleteedge.bat | Ne pas utiliser | Aucune |
 
-Travail à planifier (non commencé) : tweaks natifs Core Parking, Power Throttling,
-raccourcis d'accessibilité, TCP globaux, confidentialité étendue, choix de DNS, test de
-précision du timer ; changement de `network-ipv6-disable` vers « préférer IPv4 » ; revue de
+### Réalisé le 2026-11-19 : tweaks natifs (catalogue 61 → 73 entrées)
+
+Ajoutés : `power-throttling-disable` (bloqué si batterie), `core-parking-disable`,
+`hibernation-disable`, `tcp-rsc-disable`, `dns-google`, `dns-quad9` (avec `dns-fast` ces trois
+DNS sont exclusifs et partagent la mémoire du DNS d'origine), `accessibility-shortcuts-disable`
+(coupe seulement le raccourci clavier, bit 0x04 de `Flags`), `activity-history-disable`,
+`location-disable`, `edge-background-disable`, `explorer-startup-delay-remove`, et un widget
+« Mesurer la précision du timer » dans la catégorie Latence (action moteur `MeasureTimer`).
+
+Volontairement **non ajoutés** (gain non démontré ou risque) : `TrackNblOwner` (champ de
+débogage NDIS), autotuning/ECN/timestamps TCP (débit dégradé ou gain négligeable), services
+Xbox (casse Game Pass et le Store), télémétrie NVIDIA (service absent des pilotes récents,
+**[à vérifier]**).
+
+Vérifié : syntaxe PowerShell sans erreur, `GetAllStates` renvoie 67 états dont les 12 nouveaux
+cohérents avec la machine (Core Parking, hibernation et raccourcis déjà coupés), 16 tests
+unitaires des helpers en clé de registre temporaire, mesure du timer exécutée. **Non vérifié** :
+application réelle de chaque tweak (aucun réglage de la machine n'a été modifié) et affichage
+dans la fenêtre Electron.
+
+Reste à planifier : `network-ipv6-disable` vers « préférer IPv4 » ; revue de
 `mouse-data-queue-size`, `keyboard-data-queue-size`, `usb-thread-priority`, `csrss-priority` ;
 cinq fiches de guide avec lien (O&O ShutUp10++, AutoGpuAffinity, NVCleanstall, NVIDIA Profile
 Inspector, lien DDU à jour).

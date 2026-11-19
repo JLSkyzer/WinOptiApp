@@ -189,6 +189,98 @@ function Set-HandlerState_CpuBoostAggressive {
     Write-EngineLog "Boost CPU agressif -> Enabled=$Enabled" 'OK'
 }
 
+# ------------------------------------------------------------
+# Helpers : groupes de valeurs registre et reglages d'alimentation caches
+# ------------------------------------------------------------
+
+# Vrai si TOUTES les valeurs du groupe sont presentes et egales a la cible.
+function Test-RegValueGroup {
+    param([string]$Path, [System.Collections.IDictionary]$Values)
+    foreach ($name in $Values.Keys) {
+        $current = Get-RegValue -Path $Path -Name $name
+        if ($null -eq $current) { return $false }
+        if ((ConvertTo-DWordCompareValue $current) -ne (ConvertTo-DWordCompareValue $Values[$name])) { return $false }
+    }
+    return $true
+}
+
+# Active : ecrit les valeurs (apres sauvegarde de la cle). Desactive : supprime les valeurs,
+# ce qui rend la main a la valeur par defaut de Windows (ces cles de strategie sont absentes d'origine).
+function Set-RegValueGroup {
+    param([string]$Path, [System.Collections.IDictionary]$Values, [bool]$Enabled, [string]$BackupName)
+    if ($Enabled) {
+        Backup-RegistryKey -KeyPath $Path -BackupName $BackupName | Out-Null
+        foreach ($name in $Values.Keys) { Set-RegValue -Path $Path -Name $name -Value $Values[$name] -Type DWord }
+    } else {
+        foreach ($name in $Values.Keys) { Remove-RegValue -Path $Path -Name $name }
+    }
+}
+
+# Lit les index courant alternatif / continu d'un reglage du plan actif. On utilise /qh (et non /q)
+# car des reglages comme CPMINCORES sont caches. Les deux DERNIERES valeurs hexadecimales de la
+# sortie sont toujours l'index alternatif puis continu, quelle que soit la langue de Windows.
+function Get-PowerSettingIndexes {
+    param([string]$SubGroup, [string]$Setting)
+    $values = @()
+    foreach ($line in (& powercfg /qh SCHEME_CURRENT $SubGroup $Setting 2>&1)) {
+        if ("$line" -match '0x([0-9a-fA-F]{8})\s*$') { $values += [Convert]::ToInt32($matches[1], 16) }
+    }
+    if ($values.Count -lt 2) { return $null }
+    return [PSCustomObject]@{ Ac = $values[-2]; Dc = $values[-1] }
+}
+
+# ------------------------------------------------------------
+# Core Parking, Power Throttling, hibernation
+# ------------------------------------------------------------
+
+$Script:GuidCpMinCores = '0cc5b647-c1df-4637-891a-dec35c318583'
+
+function Get-HandlerState_CoreParkingDisable {
+    $v = Get-PowerSettingIndexes -SubGroup $Script:GuidSubProcessor -Setting $Script:GuidCpMinCores
+    if (-not $v) { return 'unknown' }
+    if ($v.Ac -eq 100) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_CoreParkingDisable {
+    param([bool]$Enabled)
+    $scheme = Get-ActiveSchemeGuid
+    if (-not $scheme) { throw 'Plan d''alimentation actif introuvable.' }
+    if ($Enabled) {
+        $current = Get-PowerSettingIndexes -SubGroup $Script:GuidSubProcessor -Setting $Script:GuidCpMinCores
+        if ($current -and $current.Ac -ne 100) {
+            Save-EngineState 'core-parking-disable' @{ scheme = $scheme; ac = $current.Ac; dc = $current.Dc }
+        }
+        $ac = 100; $dc = 100
+    } else {
+        $saved = Get-EngineState 'core-parking-disable'
+        if (-not $saved -or -not $saved.scheme -or $saved.scheme.ToLower() -ne $scheme.ToLower()) {
+            throw 'Valeur d''origine du Core Parking inconnue pour ce plan : regle "Coeurs min" a la main dans Options d''alimentation > Parametres avances > Gestion de l''alimentation du processeur.'
+        }
+        $ac = [int]$saved.ac; $dc = [int]$saved.dc
+    }
+    & powercfg /setacvalueindex SCHEME_CURRENT $Script:GuidSubProcessor $Script:GuidCpMinCores $ac | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'powercfg a refuse de modifier le Core Parking.' }
+    & powercfg /setdcvalueindex SCHEME_CURRENT $Script:GuidSubProcessor $Script:GuidCpMinCores $dc | Out-Null
+    & powercfg /setactive SCHEME_CURRENT | Out-Null
+    Write-EngineLog "Core Parking (coeurs min AC/DC = $ac/$dc) -> Enabled=$Enabled" 'OK'
+}
+
+function Get-HandlerState_HibernationDisable {
+    $v = Get-RegValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name 'HibernateEnabled'
+    if ($null -eq $v) { return 'unknown' }
+    if ([int]$v -eq 0) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_HibernationDisable {
+    param([bool]$Enabled)
+    $arg = if ($Enabled) { 'off' } else { 'on' }
+    & powercfg /hibernate $arg | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "powercfg /hibernate $arg a echoue (hibernation non prise en charge sur cette machine ?)." }
+    Write-EngineLog "Hibernation -> desactivee=$Enabled" 'OK'
+}
+
 # ============================================================
 # Handlers nommes : Reseau
 # ============================================================
@@ -342,55 +434,112 @@ function Set-HandlerState_MsiModeNetwork {
     Write-EngineLog "MSI Mode reseau -> Enabled=$Enabled sur $(@($devices).Count) peripherique(s)" 'OK'
 }
 
-function Get-HandlerState_DnsFast {
+# --- DNS : plusieurs fournisseurs exclusifs (dns-fast = Cloudflare, dns-google, dns-quad9) ---
+# Les serveurs d'origine sont memorises UNE fois par interface dans l'etat 'dns-original' et
+# ne sont jamais ecrases par un autre fournisseur de la liste : passer de Cloudflare a Google
+# puis tout desactiver doit ramener au DNS d'avant, pas a Cloudflare.
+
+$Script:DnsProviders = [ordered]@{
+    cloudflare = @('1.1.1.1', '1.0.0.1')
+    google     = @('8.8.8.8', '8.8.4.4')
+    quad9      = @('9.9.9.9', '149.112.112.112')
+}
+
+function Get-DnsKey {
+    param($Servers)
+    return ((@($Servers) | Sort-Object) -join ',')
+}
+
+function Test-DnsIsKnownProvider {
+    param($Servers)
+    $key = Get-DnsKey $Servers
+    foreach ($p in $Script:DnsProviders.Values) { if ((Get-DnsKey $p) -eq $key) { return $true } }
+    return $false
+}
+
+function Get-DnsProviderState {
+    param([string[]]$Servers)
     $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue
     if (-not $adapters) { return 'unknown' }
-    $allCloudflare = $true
+    $wanted = Get-DnsKey $Servers
+    $all = $true
     $any = $false
     foreach ($a in $adapters) {
         $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
         if (-not $current -or -not $current.ServerAddresses -or $current.ServerAddresses.Count -eq 0) { continue }
         $any = $true
-        if (($current.ServerAddresses | Sort-Object) -join ',' -ne '1.0.0.1,1.1.1.1') { $allCloudflare = $false }
+        if ((Get-DnsKey $current.ServerAddresses) -ne $wanted) { $all = $false }
     }
     if (-not $any) { return 'unknown' }
-    if ($allCloudflare) { return 'on' }
+    if ($all) { return 'on' }
     return 'off'
 }
 
-function Set-HandlerState_DnsFast {
-    param([bool]$Enabled)
-    $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue
+function Set-DnsProviderState {
+    param([string[]]$Servers, [bool]$Enabled, [string]$Label)
+    $adapters = @(Get-NetAdapter -Physical -ErrorAction SilentlyContinue)
+    if (-not $adapters) { throw 'Aucun adaptateur reseau physique detecte.' }
+    $originals = @{}
+    foreach ($src in @((Get-EngineState 'dns-original'), (Get-EngineState 'dns-fast'))) {
+        foreach ($o in @($src)) {
+            if ($o -and $null -ne $o.IfIndex -and -not $originals.ContainsKey([string]$o.IfIndex)) { $originals[[string]$o.IfIndex] = @($o.OriginalServers) }
+        }
+    }
+    $failures = 0
     if ($Enabled) {
-        $captured = @()
         foreach ($a in $adapters) {
             $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
-            $captured += [PSCustomObject]@{ IfIndex = $a.ifIndex; OriginalServers = @($current.ServerAddresses) }
-            try {
-                Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue
-            } catch {
-                Write-EngineLog "DNS rapide: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
-            }
+            $servers = @($current.ServerAddresses)
+            if (-not (Test-DnsIsKnownProvider $servers)) { $originals[[string]$a.ifIndex] = $servers }
+            try { Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $Servers -ErrorAction Stop }
+            catch { $failures++; Write-EngineLog "DNS $Label : echec sur $($a.Name): $($_.Exception.Message)" 'WARN' }
         }
-        Save-EngineState 'dns-fast' $captured
-        Write-EngineLog "DNS rapide (Cloudflare) applique sur $(@($adapters).Count) interface(s)" 'OK'
+        $saved = @(); foreach ($k in $originals.Keys) { $saved += [PSCustomObject]@{ IfIndex = [int]$k; OriginalServers = @($originals[$k]) } }
+        Save-EngineState 'dns-original' $saved
+        Write-EngineLog "DNS $Label applique sur $(@($adapters).Count) interface(s)" 'OK'
     } else {
-        $state = Get-EngineState 'dns-fast'
+        $wanted = Get-DnsKey $Servers
         foreach ($a in $adapters) {
-            $original = $null
-            if ($state) { $original = ($state | Where-Object { $_.IfIndex -eq $a.ifIndex }).OriginalServers }
+            $current = Get-DnsClientServerAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+            # On ne touche pas une interface reglee sur un autre DNS que celui qu'on desactive.
+            if ((Get-DnsKey $current.ServerAddresses) -ne $wanted) { continue }
+            $original = $originals[[string]$a.ifIndex]
             try {
-                if ($original -and @($original).Count -gt 0) {
-                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $original -ErrorAction SilentlyContinue
+                if ($original -and @($original).Count -gt 0 -and -not (Test-DnsIsKnownProvider $original)) {
+                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses $original -ErrorAction Stop
                 } else {
-                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+                    Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction Stop
                 }
-            } catch {
-                Write-EngineLog "DNS restauration: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
-            }
+            } catch { $failures++; Write-EngineLog "DNS restauration: echec sur $($a.Name): $($_.Exception.Message)" 'WARN' }
         }
-        Write-EngineLog 'DNS restaure (DHCP/original)' 'OK'
+        Write-EngineLog "DNS $Label desactive (DNS d'origine / DHCP)" 'OK'
     }
+    if ($failures -gt 0) { throw "Le DNS n'a pas pu etre modifie sur $failures interface(s) (voir le journal)." }
+}
+
+function Get-HandlerState_DnsFast { return (Get-DnsProviderState -Servers $Script:DnsProviders.cloudflare) }
+function Set-HandlerState_DnsFast { param([bool]$Enabled) Set-DnsProviderState -Servers $Script:DnsProviders.cloudflare -Enabled $Enabled -Label 'Cloudflare' }
+
+function Get-HandlerState_DnsGoogle { return (Get-DnsProviderState -Servers $Script:DnsProviders.google) }
+function Set-HandlerState_DnsGoogle { param([bool]$Enabled) Set-DnsProviderState -Servers $Script:DnsProviders.google -Enabled $Enabled -Label 'Google' }
+
+function Get-HandlerState_DnsQuad9 { return (Get-DnsProviderState -Servers $Script:DnsProviders.quad9) }
+function Set-HandlerState_DnsQuad9 { param([bool]$Enabled) Set-DnsProviderState -Servers $Script:DnsProviders.quad9 -Enabled $Enabled -Label 'Quad9' }
+
+# --- TCP : Receive Segment Coalescing (regroupement des segments recus) ---
+
+function Get-HandlerState_TcpRscDisable {
+    $s = Get-NetOffloadGlobalSetting -ErrorAction SilentlyContinue
+    if (-not $s -or $null -eq $s.ReceiveSegmentCoalescing) { return 'unknown' }
+    if ("$($s.ReceiveSegmentCoalescing)" -eq 'Disabled') { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_TcpRscDisable {
+    param([bool]$Enabled)
+    $value = if ($Enabled) { 'Disabled' } else { 'Enabled' }
+    Set-NetOffloadGlobalSetting -ReceiveSegmentCoalescing $value -ErrorAction Stop
+    Write-EngineLog "TCP RSC -> $value" 'OK'
 }
 
 # ============================================================
@@ -582,6 +731,37 @@ function Set-HandlerState_StartMenuSuggestionsDisable {
     Write-EngineLog "Suggestions Start Menu/verrouillage -> Enabled(desactivees)=$Enabled" 'OK'
 }
 
+# Historique d'activite (Timeline) : stoppe la collecte, la publication et l'envoi cloud.
+$Script:ActivityHistoryPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
+$Script:ActivityHistoryValues = [ordered]@{ EnableActivityFeed = 0; PublishUserActivities = 0; UploadUserActivities = 0 }
+
+function Get-HandlerState_ActivityHistoryDisable {
+    if (Test-RegValueGroup -Path $Script:ActivityHistoryPath -Values $Script:ActivityHistoryValues) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_ActivityHistoryDisable {
+    param([bool]$Enabled)
+    Set-RegValueGroup -Path $Script:ActivityHistoryPath -Values $Script:ActivityHistoryValues -Enabled $Enabled -BackupName 'activity-history-disable'
+    Write-EngineLog "Historique d'activite -> Enabled(desactive)=$Enabled" 'OK'
+}
+
+# Edge : pas de pre-chargement au demarrage de Windows, pas de processus residents apres fermeture.
+# Ces deux strategies font afficher "Gere par votre organisation" dans Edge (effet purement cosmetique).
+$Script:EdgePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+$Script:EdgeBackgroundValues = [ordered]@{ StartupBoostEnabled = 0; BackgroundModeEnabled = 0 }
+
+function Get-HandlerState_EdgeBackgroundDisable {
+    if (Test-RegValueGroup -Path $Script:EdgePolicyPath -Values $Script:EdgeBackgroundValues) { return 'on' }
+    return 'off'
+}
+
+function Set-HandlerState_EdgeBackgroundDisable {
+    param([bool]$Enabled)
+    Set-RegValueGroup -Path $Script:EdgePolicyPath -Values $Script:EdgeBackgroundValues -Enabled $Enabled -BackupName 'edge-background-disable'
+    Write-EngineLog "Edge demarrage/arriere-plan -> Enabled(desactive)=$Enabled" 'OK'
+}
+
 # ============================================================
 # Handlers nommes : Services (MMCSS)
 # ============================================================
@@ -724,6 +904,41 @@ function Invoke-SetAudioDeviceEffects {
 # ============================================================
 # Handlers nommes : Peripheriques
 # ============================================================
+
+# Raccourcis d'accessibilite (Touches remanentes = Maj x5, Touches filtrantes = Maj droite 8 s,
+# Touches bascule = Verr Num 5 s) : on coupe uniquement le RACCOURCI CLAVIER (bit 0x04 de Flags,
+# HOTKEYACTIVE), pas la fonction elle-meme, qui reste activable depuis les Parametres.
+# Valeurs par defaut de Windows : 510 / 126 / 62.
+$Script:AccessibilityHotkeys = @(
+    @{ Path = 'HKCU:\Control Panel\Accessibility\StickyKeys';        Default = 510 },
+    @{ Path = 'HKCU:\Control Panel\Accessibility\Keyboard Response'; Default = 126 },
+    @{ Path = 'HKCU:\Control Panel\Accessibility\ToggleKeys';        Default = 62 }
+)
+
+function Get-AccessibilityFlags {
+    param($Item)
+    $raw = Get-RegValue -Path $Item.Path -Name 'Flags'
+    $flags = 0
+    if ($null -eq $raw -or -not [int]::TryParse("$raw", [ref]$flags)) { return [int]$Item.Default }
+    return $flags
+}
+
+function Get-HandlerState_AccessibilityShortcutsDisable {
+    foreach ($item in $Script:AccessibilityHotkeys) {
+        if (((Get-AccessibilityFlags $item) -band 4) -ne 0) { return 'off' }
+    }
+    return 'on'
+}
+
+function Set-HandlerState_AccessibilityShortcutsDisable {
+    param([bool]$Enabled)
+    foreach ($item in $Script:AccessibilityHotkeys) {
+        $flags = Get-AccessibilityFlags $item
+        $new = if ($Enabled) { $flags -band (-bnot 4) } else { $flags -bor 4 }
+        Set-RegValue -Path $item.Path -Name 'Flags' -Value "$new" -Type String
+    }
+    Write-EngineLog "Raccourcis d'accessibilite clavier -> Enabled(desactives)=$Enabled" 'OK'
+}
 
 function Get-HandlerState_MouseAccelerationDisable {
     $v = Get-RegValue -Path 'HKCU:\Control Panel\Mouse' -Name 'MouseSpeed'
@@ -1074,6 +1289,55 @@ function Invoke-RemoveFullscreenOptApp {
 }
 
 # ============================================================
+# Mesure de la precision du timer systeme
+# ============================================================
+
+# Mesure ce qu'un processus ordinaire obtient reellement : resolution globale du timer
+# (NtQueryTimerResolution, unites de 100 ns) puis duree reelle de Sleep(1) sur N echantillons.
+# Ne modifie rien : sert a comparer avant/apres les tweaks de la categorie Latence.
+function Invoke-MeasureTimer {
+    param($Payload)
+    $samples = 200
+    if ($Payload -and $Payload.samples) { $samples = [math]::Min([math]::Max([int]$Payload.samples, 20), 1000) }
+    if (-not ('WoTimerProbe' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
+public static class WoTimerProbe {
+    [DllImport("ntdll.dll")] static extern int NtQueryTimerResolution(out uint minimum, out uint maximum, out uint current);
+    public static double[] Resolution() {
+        uint mn, mx, cur;
+        NtQueryTimerResolution(out mn, out mx, out cur);
+        return new double[] { mn / 10000.0, mx / 10000.0, cur / 10000.0 };
+    }
+    public static double[] SleepOne(int n) {
+        double[] r = new double[n];
+        Stopwatch sw = new Stopwatch();
+        for (int i = 0; i < n; i++) { sw.Restart(); Thread.Sleep(1); sw.Stop(); r[i] = sw.Elapsed.TotalMilliseconds; }
+        return r;
+    }
+}
+'@
+    }
+    $res = [WoTimerProbe]::Resolution()
+    $durations = [WoTimerProbe]::SleepOne($samples)
+    $stats = $durations | Measure-Object -Average -Minimum -Maximum
+    $sorted = $durations | Sort-Object
+    return [PSCustomObject]@{
+        coarsestMs = [math]::Round($res[0], 3)
+        finestMs   = [math]::Round($res[1], 3)
+        currentMs  = [math]::Round($res[2], 3)
+        samples    = $samples
+        sleepAvgMs = [math]::Round($stats.Average, 3)
+        sleepMinMs = [math]::Round($stats.Minimum, 3)
+        sleepMaxMs = [math]::Round($stats.Maximum, 3)
+        sleepP95Ms = [math]::Round($sorted[[int][math]::Floor(($samples - 1) * 0.95)], 3)
+    }
+}
+
+# ============================================================
 # Points de restauration
 # ============================================================
 
@@ -1180,6 +1444,7 @@ try {
         'SetAudioDeviceEffects' { Invoke-SetAudioDeviceEffects -Payload $Script:Payload; $null }
         'CreateRestorePoint' { Invoke-CreateRestorePoint -Payload $Script:Payload; $null }
         'ListRestorePoints' { Invoke-ListRestorePoints }
+        'MeasureTimer' { Invoke-MeasureTimer -Payload $Script:Payload }
         'GetEnvironmentInfo' { [PSCustomObject]@{ isAdmin = (Test-IsElevated) } }
         'RestartExplorer' { Invoke-RestartExplorer; $null }
         default { throw "Action inconnue: $Action" }

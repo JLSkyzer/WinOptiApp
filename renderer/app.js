@@ -313,7 +313,7 @@
     if (entry.guardNoDeviceClass && !guardOk) {
       const guardNote = document.createElement('div');
       guardNote.className = 'guard-note';
-      guardNote.textContent = `Peripherique ${entry.guardNoDeviceClass} detecte : desactivation bloquee par securite.`;
+      guardNote.textContent = entry.guardNote || `Peripherique ${entry.guardNoDeviceClass} detecte : desactivation bloquee par securite.`;
       main.appendChild(guardNote);
     }
     card.appendChild(main);
@@ -360,6 +360,60 @@
     if (entry.type === 'exe-list') return renderGpuPrefList(entry);
     if (entry.type === 'fullscreen-opt-list') return renderFullscreenOptList(entry);
     if (entry.type === 'audio-device-list') return renderAudioDeviceList(entry);
+    if (entry.type === 'timer-test') return renderTimerTest(entry);
+  }
+
+  // Derniere mesure du timer, gardee en memoire pour afficher l'ecart avant/apres un tweak.
+  let lastTimerMeasure = null;
+
+  function renderTimerTest(entry) {
+    sectionTitle(entry.label);
+    const intro = document.createElement('div');
+    intro.className = 'card-desc';
+    intro.textContent = entry.description;
+    contentEl.appendChild(intro);
+
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const main = document.createElement('div');
+    main.className = 'list-row-main';
+    const out = document.createElement('div');
+    out.className = 'list-row-sub';
+    out.textContent = lastTimerMeasure ? formatTimerMeasure(lastTimerMeasure, null) : 'Aucune mesure pour l\'instant.';
+    main.appendChild(out);
+    row.appendChild(main);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = 'Lancer la mesure';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      out.textContent = 'Mesure en cours (environ 3 secondes)...';
+      const res = await window.api.callEngine('MeasureTimer', { samples: 200 });
+      btn.disabled = false;
+      if (!res.ok) { out.textContent = ''; toast('Echec de la mesure: ' + res.error, false); return; }
+      const previous = lastTimerMeasure;
+      lastTimerMeasure = res.data;
+      out.textContent = formatTimerMeasure(res.data, previous);
+    });
+    row.appendChild(btn);
+    contentEl.appendChild(row);
+  }
+
+  function formatTimerMeasure(m, previous) {
+    const fmt = (v) => String(v).replace('.', ',');
+    let text = `Resolution du timer : ${fmt(m.currentMs)} ms (la plus fine possible : ${fmt(m.finestMs)} ms). `
+      + `Pause de 1 ms mesuree sur ${m.samples} essais : moyenne ${fmt(m.sleepAvgMs)} ms, `
+      + `95 % des essais sous ${fmt(m.sleepP95Ms)} ms, pire cas ${fmt(m.sleepMaxMs)} ms.`;
+    if (m.sleepAvgMs > m.currentMs * 3) {
+      text += ' La pause reelle est bien plus longue que la resolution du timer : un programme normal n\'en profite pas tant que "Resolution globale du timer" n\'est pas activee (puis redemarrage).';
+    }
+    if (previous) {
+      const delta = Math.round((m.sleepAvgMs - previous.sleepAvgMs) * 1000) / 1000;
+      const sign = delta > 0 ? '+' : '';
+      text += ` Par rapport a la mesure precedente : ${sign}${fmt(delta)} ms sur la moyenne.`;
+    }
+    return text;
   }
 
   function sectionTitle(text) {
