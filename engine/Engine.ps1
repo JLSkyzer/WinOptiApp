@@ -983,36 +983,9 @@ function Set-HandlerState_UsbThreadPriority {
     Write-EngineLog "Priorite des threads USB -> Enabled=$Enabled" 'OK'
 }
 
-function Get-HandlerState_CsrssPriority {
-    $procs = Get-Process -Name 'csrss' -ErrorAction SilentlyContinue
-    if (-not $procs) { return 'unknown' }
-    $allHigh = $true
-    foreach ($p in $procs) {
-        try { if ($p.PriorityClass -ne [System.Diagnostics.ProcessPriorityClass]::High) { $allHigh = $false } }
-        catch { $allHigh = $false }
-    }
-    if ($allHigh) { return 'on' }
-    return 'off'
-}
-
-function Set-HandlerState_CsrssPriority {
-    param([bool]$Enabled)
-    $procs = Get-Process -Name 'csrss' -ErrorAction SilentlyContinue
-    if (-not $procs) { throw 'Processus csrss.exe introuvable.' }
-    $target = if ($Enabled) { [System.Diagnostics.ProcessPriorityClass]::High } else { [System.Diagnostics.ProcessPriorityClass]::Normal }
-    $failures = 0
-    foreach ($p in $procs) {
-        try { $p.PriorityClass = $target } catch { $failures++ }
-    }
-    Start-Sleep -Milliseconds 200
-    $verified = Get-HandlerState_CsrssPriority
-    $expected = if ($Enabled) { 'on' } else { 'off' }
-    if ($verified -ne $expected -or $failures -gt 0) {
-        Write-EngineLog "Priorite csrss.exe: application demandee mais non confirmee (protection PPL probable, $failures echec(s))" 'WARN'
-        throw 'La modification de priorite de csrss.exe a ete refusee par Windows (Protected Process Light). Ce mecanisme herite ne fonctionne plus de facon fiable sur les versions modernes.'
-    }
-    Write-EngineLog "Priorite csrss.exe -> Enabled=$Enabled (verifiee)" 'OK'
-}
+# NB : la priorite de csrss.exe n'est plus un handler. Modifier PriorityClass a chaud est refuse
+# par Windows 11 (processus protege) ; le tweak passe par Image File Execution Options\PerfOptions,
+# lu par le noyau a la creation du processus (donc effet au prochain demarrage), comme searchindexer-priority-reduce.
 
 # ============================================================
 # Handlers nommes : Latence

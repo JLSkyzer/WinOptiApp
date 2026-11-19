@@ -266,8 +266,7 @@
     "requiresRestart": false,
     "label": "Priorité MMCSS pour le jeu au premier plan",
     "description": "SystemResponsiveness=10 + priorité GPU/CPU forcée pour la tâche multimédia \"Games\". Réduit les à-coups quand Windows fait autre chose en tâche de fond."
-  }
-  ,
+  },
   {
     "id": "cpu-boost-aggressive",
     "category": "alimentation",
@@ -304,7 +303,24 @@
     "handler": "NetworkIPv6Disable",
     "requiresRestart": false,
     "label": "Désactiver IPv6",
-    "description": "Désactive le protocole IPv6 sur toutes les interfaces physiques. Peut casser des services qui dépendent explicitement d'IPv6."
+    "description": "Tweak retiré, conservé ici uniquement pour que tu puisses le désactiver. Microsoft déconseille de désactiver IPv6 (certains services Windows en dépendent) : utilise plutôt « Préférer IPv4 à IPv6 ».",
+    "retired": true
+  },
+  {
+    "id": "network-prefer-ipv4",
+    "category": "reseau",
+    "risk": "basique",
+    "type": "toggle",
+    "kind": "registry",
+    "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters",
+    "name": "DisabledComponents",
+    "regType": "DWord",
+    "onValue": 32,
+    "offValue": null,
+    "defaultValue": null,
+    "requiresRestart": true,
+    "label": "Préférer IPv4 à IPv6",
+    "description": "Windows essaie IPv4 avant IPv6, ce qui évite les temps d'attente quand l'IPv6 de la box est mal configuré. IPv6 reste actif et la boucle locale n'est pas touchée : rien ne casse, contrairement à la désactivation complète. Méthode documentée par Microsoft (KB929852)."
   },
   {
     "id": "delivery-optimization-http-only",
@@ -354,8 +370,7 @@
     "requiresRestart": false,
     "label": "Basculer vers un résolveur DNS rapide (Cloudflare)",
     "description": "Configure 1.1.1.1 / 1.0.0.1 (Cloudflare) comme serveurs DNS sur toutes les interfaces physiques, à la place du DNS fourni par ton FAI/routeur. L'état DNS d'origine est sauvegardé pour un rollback exact."
-  }
-  ,
+  },
   {
     "id": "tdr-delay-increase",
     "category": "affichage",
@@ -466,8 +481,7 @@
     "requiresRestart": false,
     "label": "Priorité CPU réduite pour TiWorker.exe",
     "description": "Force la priorité CPU du worker Windows Update (TiWorker.exe, souvent responsable de pics CPU en arrière-plan) à \"Faible\", sans bloquer les mises à jour elles-mêmes."
-  }
-  ,
+  },
   {
     "id": "service-diagtrack",
     "category": "services",
@@ -495,8 +509,7 @@
     "requiresRestart": false,
     "label": "Service WAP Push Message Routing",
     "description": "Service hérité du routage de messages WAP Push, quasi jamais utilisé sur un PC de bureau moderne."
-  }
-  ,
+  },
   {
     "id": "start-menu-suggestions-disable",
     "category": "confidentialite",
@@ -573,8 +586,7 @@
     "requiresRestart": false,
     "label": "Désactiver la synchronisation cloud du presse-papiers",
     "description": "Coupe la synchronisation du presse-papiers entre appareils Microsoft (\"Sync across your devices\"). N'affecte pas l'historique local du presse-papiers (Win+V)."
-  }
-  ,
+  },
   {
     "id": "mmcss-audio-priority",
     "category": "audio",
@@ -594,8 +606,7 @@
     "requiresRestart": false,
     "label": "Désactiver les améliorations audio par périphérique",
     "description": "Coupe la virtualisation/égalisation logicielle de Windows (par périphérique de sortie), qui ajoute de la latence. Laisse le logiciel du périphérique (casque, DAC) gérer les effets si besoin."
-  }
-  ,
+  },
   {
     "id": "mouse-acceleration-disable",
     "category": "peripheriques",
@@ -621,7 +632,8 @@
     "defaultValue": 100,
     "requiresRestart": true,
     "label": "Réduire le buffer d'entrée souris",
-    "description": "Réduit la taille de la file d'attente des évènements souris (100 vers 20). Effet non garanti selon les configurations (perçu comme un placebo par certains, réel par d'autres) — teste et compare avant/après."
+    "description": "Tweak retiré, conservé ici uniquement pour que tu puisses le désactiver. Réduire la file d'évènements souris (100 → 20) n'a aucun gain démontré et peut faire perdre des mouvements avec une souris haute fréquence (4–8 kHz).",
+    "retired": true
   },
   {
     "id": "keyboard-data-queue-size",
@@ -637,7 +649,8 @@
     "defaultValue": 100,
     "requiresRestart": true,
     "label": "Réduire le buffer d'entrée clavier",
-    "description": "Réduit la taille de la file d'attente des évènements clavier (100 vers 20). Effet non garanti selon les configurations — teste et compare avant/après."
+    "description": "Tweak retiré, conservé ici uniquement pour que tu puisses le désactiver. Réduire la file d'évènements clavier (100 → 20) n'a aucun gain démontré et peut faire perdre des frappes lors de rafales.",
+    "retired": true
   },
   {
     "id": "keyboard-repeat-accelerate",
@@ -664,20 +677,25 @@
     "handler": "UsbThreadPriority",
     "requiresRestart": true,
     "label": "Priorité des threads USB",
-    "description": "Augmente la priorité des threads de traitement des contrôleurs USB 3 (XHCI). Effet non garanti selon les configurations — mécanisme peu documenté, teste et compare avant/après."
+    "description": "Tweak retiré, conservé ici uniquement pour que tu puisses le désactiver. Passer les threads USB en priorité temps réel (31) n'a aucun effet démontré et peut priver d'autres threads du CPU sous forte charge USB.",
+    "retired": true
   },
   {
     "id": "csrss-priority",
     "category": "peripheriques",
     "risk": "avance",
     "type": "toggle",
-    "kind": "handler",
-    "handler": "CsrssPriority",
-    "requiresRestart": false,
+    "kind": "registry",
+    "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
+    "name": "CpuPriorityClass",
+    "regType": "DWord",
+    "onValue": 3,
+    "offValue": null,
+    "defaultValue": null,
+    "requiresRestart": true,
     "label": "Priorité haute de csrss.exe",
-    "description": "Tente d'élever la priorité du processus système csrss.exe. Mécanisme hérité d'avant les protections modernes (Protected Process Light) : sur Windows 11, Windows refuse généralement ce changement et l'application le signale honnêtement au lieu d'afficher un faux succès."
-  }
-  ,
+    "description": "Demande à Windows de lancer csrss.exe (le sous-système qui relaie les entrées souris/clavier) avec une priorité CPU « Haute », via Image File Execution Options. Appliqué au prochain démarrage, comme les tweaks SearchIndexer et TiWorker. Effet non garanti — teste et compare l'input lag avant/après."
+  },
   {
     "id": "global-timer-resolution",
     "category": "latence",

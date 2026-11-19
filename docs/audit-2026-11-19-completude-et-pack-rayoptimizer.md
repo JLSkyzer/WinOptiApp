@@ -199,10 +199,23 @@ unitaires des helpers en clé de registre temporaire, mesure du timer exécutée
 application réelle de chaque tweak (aucun réglage de la machine n'a été modifié) et affichage
 dans la fenêtre Electron.
 
-Reste à planifier : `network-ipv6-disable` vers « préférer IPv4 » ; revue de
-`mouse-data-queue-size`, `keyboard-data-queue-size`, `usb-thread-priority`, `csrss-priority` ;
-cinq fiches de guide avec lien (O&O ShutUp10++, AutoGpuAffinity, NVCleanstall, NVIDIA Profile
-Inspector, lien DDU à jour).
+### Réalisé le 2026-11-19 : correction des tweaks à risque (catalogue : 74 entrées)
+
+- `network-ipv6-disable` est **retiré** et remplacé par `network-prefer-ipv4`
+  (`DisabledComponents=0x20`, méthode documentée Microsoft KB929852 **[connu]**) : IPv6 reste actif.
+- `mouse-data-queue-size`, `keyboard-data-queue-size`, `usb-thread-priority` sont **retirés**
+  (aucun gain démontré, perte d'évènements ou famine de threads plausible **[connu]**).
+- Un tweak `retired: true` n'est affiché que s'il est **actuellement actif**, pour que tu puisses
+  le désactiver ; la remise à zéro de catégorie continue de le traiter. Sur cette machine les
+  quatre sont à « off », donc invisibles.
+- `csrss-priority` passe de l'élévation à chaud (refusée par Windows 11) à
+  `Image File Execution Options\csrss.exe\PerfOptions\CpuPriorityClass=3`, appliqué au prochain
+  démarrage. Effet non garanti **[à vérifier : mesurer l'input lag avant/après]**.
+- Non traité : `gpu-preemption-disable` (clé non documentée, laissé en `avance` avec sa mention
+  d'effet non garanti).
+
+Reste à planifier : cinq fiches de guide avec lien (O&O ShutUp10++, AutoGpuAffinity,
+NVCleanstall, NVIDIA Profile Inspector, lien DDU à jour).
 
 ## Annexe — empreintes SHA-256 du pack
 

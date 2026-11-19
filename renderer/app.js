@@ -49,7 +49,14 @@
   }
 
   function toggleEntriesForCategory(cat) {
-    return entriesForCategory(cat).filter((e) => e.kind);
+    // Un tweak "retired" n'est plus propose, sauf s'il est actuellement actif : on le laisse
+    // visible pour que l'utilisateur puisse le desactiver.
+    return entriesForCategory(cat).filter((e) => {
+      if (!e.kind) return false;
+      if (!e.retired) return true;
+      const s = state.statesById[e.id];
+      return !!s && s.state === 'on';
+    });
   }
 
   function categoryCounts(cat) {
