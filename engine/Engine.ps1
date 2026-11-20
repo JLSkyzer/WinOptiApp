@@ -20,6 +20,20 @@ function Get-CatalogEntry {
     return $Script:Catalog | Where-Object { $_.id -eq $Id } | Select-Object -First 1
 }
 
+# Normalise une valeur DWord pour la comparaison : Get-ItemProperty relit certaines
+# valeurs DWord negatives (ex: -1) comme un UInt32 non signe (4294967295), alors que
+# le catalogue JSON les ecrit en signe. Sans cette normalisation, la comparaison texte
+# echoue toujours et un toggle correctement applique apparait comme "off".
+function ConvertTo-DWordCompareValue {
+    param($Value)
+    if ($null -eq $Value) { return $null }
+    try {
+        return [int64]([uint32]([int64]$Value -band 4294967295L))
+    } catch {
+        return $Value
+    }
+}
+
 # ============================================================
 # Etat / application generique (kind: registry | service | handler)
 # ============================================================
@@ -33,7 +47,7 @@ function Get-ToggleState {
                 if ($null -eq $Entry.defaultValue -or "$($Entry.defaultValue)" -eq "$($Entry.offValue)") { return 'off' }
                 return 'off'
             }
-            if ("$current" -eq "$($Entry.onValue)") { return 'on' } else { return 'off' }
+            if ((ConvertTo-DWordCompareValue $current) -eq (ConvertTo-DWordCompareValue $Entry.onValue)) { return 'on' } else { return 'off' }
         }
         'service' {
             $st = Get-ServiceStartupType -ServiceName $Entry.serviceName
@@ -314,6 +328,7 @@ function Set-HandlerState_NetworkNagle {
 
 function Get-HandlerState_NetworkRSS {
     $adapters = Get-NetAdapterRss -ErrorAction SilentlyContinue
+    if (-not $adapters) { return 'unknown' }
     foreach ($a in $adapters) { if ($a.Enabled) { return 'on' } }
     return 'off'
 }
@@ -321,15 +336,21 @@ function Get-HandlerState_NetworkRSS {
 function Set-HandlerState_NetworkRSS {
     param([bool]$Enabled)
     $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue
+    if (-not $adapters) { throw 'Aucun adaptateur reseau physique detecte.' }
+    $successCount = 0
     foreach ($a in $adapters) {
         try {
-            if ($Enabled) { Enable-NetAdapterRss -Name $a.Name -ErrorAction SilentlyContinue }
-            else { Disable-NetAdapterRss -Name $a.Name -ErrorAction SilentlyContinue }
+            if ($Enabled) { Enable-NetAdapterRss -Name $a.Name -ErrorAction Stop }
+            else { Disable-NetAdapterRss -Name $a.Name -ErrorAction Stop }
+            $successCount++
         } catch {
             Write-EngineLog "RSS: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
         }
     }
-    Write-EngineLog "RSS -> Enabled=$Enabled" 'OK'
+    Write-EngineLog "RSS -> Enabled=$Enabled ($successCount/$(@($adapters).Count) adaptateur(s))" 'OK'
+    if ($Enabled -and $successCount -eq 0) {
+        throw 'Le pilote de cette carte reseau ne prend pas en charge le RSS (Receive Side Scaling) : aucune propriete RSS exposee par le pilote. Limitation materielle/pilote, pas un bug de l''application.'
+    }
 }
 
 function Get-HandlerState_NetworkEEE {
@@ -396,13 +417,21 @@ function Get-HandlerState_NetworkPowerManagementDisable {
 function Set-HandlerState_NetworkPowerManagementDisable {
     param([bool]$Enabled)
     $adapters = Get-NetAdapterPowerManagement -ErrorAction SilentlyContinue
+    if (-not $adapters) { throw 'Ce pilote de carte reseau ne prend pas en charge la gestion d''energie NDIS (aucune propriete exposee). Limitation materielle/pilote, pas un bug de l''application.' }
     $value = if ($Enabled) { 'Disabled' } else { 'Enabled' }
+    $successCount = 0
     foreach ($a in $adapters) {
-        try { Set-NetAdapterPowerManagement -Name $a.Name -AllowComputerToTurnOffDevice $value -ErrorAction SilentlyContinue } catch {
+        try {
+            Set-NetAdapterPowerManagement -Name $a.Name -AllowComputerToTurnOffDevice $value -ErrorAction Stop
+            $successCount++
+        } catch {
             Write-EngineLog "Gestion energie reseau: echec sur $($a.Name): $($_.Exception.Message)" 'WARN'
         }
     }
-    Write-EngineLog "Gestion d'energie carte reseau -> Enabled(desactivee)=$Enabled" 'OK'
+    Write-EngineLog "Gestion d'energie carte reseau -> Enabled(desactivee)=$Enabled ($successCount/$(@($adapters).Count) adaptateur(s))" 'OK'
+    if ($successCount -eq 0) {
+        throw 'Impossible de modifier la gestion d''energie de cette carte reseau (echec sur tous les adaptateurs).'
+    }
 }
 
 function Get-MsiTargetNetworkDevices {
