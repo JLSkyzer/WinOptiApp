@@ -49,8 +49,52 @@
     "category": "NVIDIA Panneau de configuration",
     "title": "Installation propre du driver (DDU + dernier Game Ready)",
     "summary": "Reinstallation propre du driver en cas de micro-stutters persistants.",
+    "action": { "type": "download", "target": "https://www.wagnardsoft.com/display-driver-uninstaller-ddu", "label": "Telecharger DDU (derniere version)" },
     "sections": [
-      { "heading": "Details", "body": "En cas de micro-stutters persistants : desinstalle le driver actuel avec Display Driver Uninstaller (DDU) en mode sans echec, puis reinstalle le dernier pilote Game Ready (pas Studio) en mode personnalise sans GeForce Experience si non desire." }
+      { "heading": "Details", "body": "En cas de micro-stutters persistants : desinstalle le driver actuel avec Display Driver Uninstaller (DDU) en mode sans echec, puis reinstalle le dernier pilote Game Ready (pas Studio) en mode personnalise sans GeForce Experience si non desire." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger d'abord le dernier pilote GPU (site NVIDIA, AMD ou Intel) et la derniere version de DDU depuis le site officiel de l'editeur.",
+        "Deconnecter Internet (cable ou Wi-Fi) pour que Windows Update ne reinstalle pas un pilote pendant l'operation.",
+        "Redemarrer en mode sans echec (DDU propose de le faire lui-meme), puis lancer DDU.",
+        "Choisir le type de GPU (NVIDIA, AMD ou Intel) et cliquer sur l'option de nettoyage avec redemarrage.",
+        "Au redemarrage, installer le pilote telecharge a l'etape 1 (voir la fiche NVCleanstall pour une installation sans composants inutiles), puis reconnecter Internet."
+      ] },
+      { "heading": "Attention", "body": "DDU supprime tous les pilotes graphiques du type choisi, pas seulement le dernier. Il ne sert qu'en cas de probleme de driver ou de changement de carte, pas comme entretien regulier." }
+    ]
+  },
+  {
+    "id": "tool-nvcleanstall",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "NVCleanstall - installer le driver NVIDIA sans composants inutiles",
+    "summary": "Choisis les composants du driver au moment de l'installation au lieu d'accepter le paquet complet.",
+    "action": { "type": "download", "target": "https://www.techpowerup.com/nvcleanstall/", "label": "Telecharger NVCleanstall" },
+    "sections": [
+      { "heading": "Details", "body": "NVCleanstall est un outil gratuit de TechPowerUp. Il recupere le pilote NVIDIA officiel puis te laisse choisir les composants a installer : pilote d'affichage seul, sans application NVIDIA / GeForce Experience, sans telemetrie, sans audio HD si ton ecran n'a pas de haut-parleurs. Resultat : moins de services en arriere-plan et une installation plus legere." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger NVCleanstall depuis le site de TechPowerUp et le lancer.",
+        "Laisser l'outil proposer le dernier pilote Game Ready, ou choisir une version precise si la derniere pose probleme.",
+        "Dans la liste des composants, garder le pilote d'affichage et le Panneau de configuration NVIDIA (les fiches NVIDIA de ce guide en ont besoin). Garder l'audio HD si le son passe par HDMI ou DisplayPort. Decocher ce dont tu n'as pas besoin (application NVIDIA, telemetrie, PhysX si aucun vieux jeu ne l'exige).",
+        "Activer l'option d'installation propre si tu veux repartir de reglages NVIDIA par defaut, puis lancer l'installation et redemarrer."
+      ] },
+      { "heading": "Attention", "body": "Si un element manque apres installation (pas de son HDMI, Panneau de configuration introuvable), relance NVCleanstall et recoche le composant correspondant. Pour un vrai nettoyage apres un probleme de driver, passe d'abord par DDU (fiche Installation propre du driver), puis installe avec NVCleanstall." }
+    ]
+  },
+  {
+    "id": "tool-nvidia-profile-inspector",
+    "category": "NVIDIA Panneau de configuration",
+    "title": "NVIDIA Profile Inspector - reglages caches du driver",
+    "summary": "Modifie les profils du driver NVIDIA au-dela du panneau de configuration. A reserver aux reglages que tu sais mesurer.",
+    "action": { "type": "link", "target": "https://github.com/Orbmu2k/nvidiaProfileInspector", "label": "Telecharger sur GitHub" },
+    "sections": [
+      { "heading": "Details", "body": "NVIDIA Profile Inspector (projet open source d'Orbmu2k) affiche et modifie les reglages internes des profils du driver NVIDIA, dont beaucoup n'apparaissent pas dans le Panneau de configuration. Les reglages courants (mode faible latence, V-Sync, filtrage des textures) se font plus simplement dans le panneau : voir les fiches NVIDIA de ce guide." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger la derniere version depuis la page Releases du depot officiel et la lancer.",
+        "Avant toute modification, exporter tes profils existants avec le bouton d'export des profils, pour pouvoir revenir en arriere.",
+        "Choisir le profil Global ou celui d'un jeu, modifier UN seul reglage, appliquer, puis tester en jeu.",
+        "Comparer avant/apres avec une mesure (CapFrameX, voir sa fiche). Si rien ne change nettement, remettre le reglage d'origine.",
+        "Pour annuler : reinitialiser le profil aux valeurs NVIDIA par defaut avec le bouton prevu, ou reimporter l'export de l'etape 2."
+      ] },
+      { "heading": "Attention", "body": "Beaucoup de listes de meilleurs reglages qui circulent en ligne ne reposent sur aucune mesure. N'importe pas un fichier de profil .nip trouve sur Internet sans avoir lu les reglages qu'il contient, et ne change jamais plusieurs reglages a la fois : tu ne saurais plus lequel a aide ou nui." }
     ]
   },
   {
@@ -268,6 +312,24 @@
     ]
   },
   {
+    "id": "tool-oosu10",
+    "category": "Confidentialite",
+    "title": "O&O ShutUp10++ - confidentialite Windows sur un seul ecran",
+    "summary": "Longue liste de reglages de confidentialite et de telemetrie, avec une option qui n'applique que les plus surs.",
+    "action": { "type": "download", "target": "https://www.oo-software.com/en/shutup10", "label": "Telecharger O&O ShutUp10++" },
+    "sections": [
+      { "heading": "Details", "body": "O&O ShutUp10++ est un logiciel gratuit et portable (sans installation) d'O&O Software. Il regroupe des dizaines de reglages de confidentialite Windows, chacun avec un indicateur de couleur selon son impact. Une partie recoupe deja les tweaks de l'app (service de telemetrie, suggestions, identifiant publicitaire, historique d'activite, localisation) ; son interet est de couvrir le reste, que l'app ne touche pas volontairement." },
+      { "heading": "Etapes", "steps": [
+        "Creer un point de restauration depuis l'app avant de commencer.",
+        "Telecharger OOSU10.exe depuis le site officiel d'O&O Software et le lancer (droits administrateur).",
+        "Dans le menu Actions, choisir l'option qui applique uniquement les reglages recommandes.",
+        "Ne toucher aux reglages marques comme limites ou deconseilles qu'un par un, apres avoir lu leur description.",
+        "Redemarrer, puis verifier que Windows Update et le Microsoft Store fonctionnent toujours."
+      ] },
+      { "heading": "Attention", "body": "Ne desactive jamais les reglages des sections Windows Update et Microsoft Defender : l'app ne les touche volontairement pas. Evite aussi de regler le meme parametre a la fois ici et dans l'app : le dernier qui s'applique gagne, et l'etat affiche dans l'app peut ne plus correspondre a la realite." }
+    ]
+  },
+  {
     "id": "tool-hwinfo",
     "category": "Monitoring / Benchmark",
     "title": "HWiNFO - monitoring temperatures/frequences/throttle en temps reel",
@@ -364,6 +426,23 @@
     ]
   },
   {
+    "id": "tool-autogpuaffinity",
+    "category": "Latence / Input",
+    "title": "AutoGpuAffinity - trouver le coeur CPU ideal pour les interruptions du GPU",
+    "summary": "Banc d'essai qui mesure les frametimes avec le GPU rattache a chaque coeur. Reglage de finition, gain generalement faible.",
+    "action": { "type": "link", "target": "https://github.com/valleyofdoom/AutoGpuAffinity", "label": "Voir le depot officiel" },
+    "sections": [
+      { "heading": "Details", "body": "Par defaut, Windows choisit seul le coeur CPU qui recoit les interruptions de la carte graphique. AutoGpuAffinity essaie chaque coeur a tour de role, mesure les frametimes pendant un test graphique, puis indique celui qui donne les meilleurs resultats. Le gain depend de la machine et reste le plus souvent faible : ce n'est pas une optimisation de base, mais un affinage a faire une fois le reste en place." },
+      { "heading": "Etapes", "steps": [
+        "Telecharger la derniere version depuis la page Releases du depot officiel, et lire son README (options du fichier config.ini, prerequis).",
+        "Fermer tous les programmes, lancer l'outil en administrateur et le laisser finir : le test dure plusieurs minutes.",
+        "Relever le coeur recommande et refaire un second passage : ne retenir un resultat que s'il se reproduit et si l'ecart entre coeurs est net.",
+        "Appliquer l'affinite en suivant les instructions du depot, puis comparer en jeu avant/apres avec CapFrameX (voir sa fiche)."
+      ] },
+      { "heading": "Attention", "body": "L'outil modifie la politique d'affinite des interruptions du GPU dans Windows : cree un point de restauration avant de l'appliquer. N'utilise pas d'ancienne copie trouvee ailleurs, et si les resultats changent d'un test a l'autre, ne change rien." }
+    ]
+  },
+  {
     "id": "tool-process-lasso",
     "category": "Gestion des process",
     "title": "Process Lasso - automatisation des priorites et affinites CPU",
@@ -376,7 +455,7 @@
         "Dans l'onglet ProBalance, laisser le comportement par defaut (reduction automatique de priorite des process qui consomment trop de CPU en arriere-plan).",
         "Pour un jeu specifique, ajouter une regle dans \"Regles de process\" fixant sa priorite sur \"Haute\" et, si le CPU a beaucoup de coeurs, une affinite excluant un coeur reserve aux taches systeme."
       ] },
-      { "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (priorite CPU renforcee au premier plan) et SvchostSplitDynamic (fusion des processus svchost.exe pour reduire l'overhead memoire). Elle propose aussi CsrssPriority (tentative de priorite haute pour le sous-systeme Windows csrss.exe), mais ce reglage est generalement refuse par Windows 11 lui-meme (protections modernes du systeme) et n'a donc le plus souvent pas d'effet reel. Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec les tweaks actifs ci-dessus : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement Win32PrioritySeparation ou SvchostSplitDynamic (par exemple, une regle Process Lasso qui repasserait un process en priorite basse alors qu'il devrait beneficier de la priorite premier plan renforcee)." }
+      { "heading": "Attention", "body": "L'application automatise deja plusieurs reglages de priorites systeme : Win32PrioritySeparation (priorite CPU renforcee au premier plan) et SvchostSplitDynamic (fusion des processus svchost.exe pour reduire l'overhead memoire). Elle propose aussi CsrssPriority (priorite haute pour le sous-systeme Windows csrss.exe, appliquee au prochain demarrage). Si tu utilises Process Lasso en parallele pour gerer manuellement les priorites/affinites d'autres processus (jeux, navigateur...), verifie qu'il n'entre pas en conflit avec les tweaks actifs ci-dessus : Process Lasso agit au niveau process individuel alors que les tweaks moteur agissent au niveau systeme, donc les deux peuvent normalement cohabiter, mais evite de forcer une priorite Process Lasso qui contredit directement Win32PrioritySeparation ou SvchostSplitDynamic (par exemple, une regle Process Lasso qui repasserait un process en priorite basse alors qu'il devrait beneficier de la priorite premier plan renforcee)." }
     ]
   }
 ]

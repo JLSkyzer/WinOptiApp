@@ -214,8 +214,20 @@ dans la fenêtre Electron.
 - Non traité : `gpu-preemption-disable` (clé non documentée, laissé en `avance` avec sa mention
   d'effet non garanti).
 
-Reste à planifier : cinq fiches de guide avec lien (O&O ShutUp10++, AutoGpuAffinity,
-NVCleanstall, NVIDIA Profile Inspector, lien DDU à jour).
+### Réalisé le 2026-11-20 : fiches de guide avec lien (35 → 39 fiches)
+
+Ajoutées : `tool-oosu10` (Confidentialité), `tool-autogpuaffinity` (Latence / Input),
+`tool-nvcleanstall` et `tool-nvidia-profile-inspector` (NVIDIA). `nvidia-driver-clean` (DDU)
+gagne un lien vers la page officielle, des étapes et un avertissement. L'avertissement de la
+fiche Process Lasso est corrigé (csrss passe désormais par PerfOptions). Les cinq liens
+officiels répondent HTTP 200 **[mesuré]** ; le contenu des étapes décrit les outils d'après
+leur fonction générale et renvoie au README du dépôt pour les options précises
+**[à vérifier face aux versions actuelles des outils]**.
+
+Les `.nip` du pack n'ont pas été audités ni repris ; la fiche NVIDIA Profile Inspector
+déconseille d'importer un profil sans l'avoir lu.
+
+Il ne reste plus de travail planifié issu de cet audit.
 
 ## Annexe — empreintes SHA-256 du pack
 
