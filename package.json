@@ -18,6 +18,10 @@
     "appId": "com.winoptiapp.app",
     "productName": "WinOptiApp",
     "asar": true,
+    "asarUnpack": [
+      "engine/**/*",
+      "data/**/*"
+    ],
     "files": [
       "main.js",
       "preload.js",

@@ -5,7 +5,7 @@ const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
 
-const ENGINE_PATH = path.join(__dirname, 'engine', 'Engine.ps1');
+const ENGINE_PATH = path.join(__dirname, 'engine', 'Engine.ps1').replace('app.asar', 'app.asar.unpacked');
 const CATALOG_PATH = path.join(__dirname, 'data', 'tweaks-catalog.json');
 const GUIDE_STEPS_PATH = path.join(__dirname, 'data', 'guide-steps.json');
 
